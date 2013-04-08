@@ -20,8 +20,10 @@ public class MainActivity extends Activity {
         setContentView(R.layout.main_activity);
         tv = (TextView)this.findViewById(R.id.textView);
     	MobileSimulation sim = new MobileSimulation();
+    	//simulation reads from string array
     	sim.getData();
-    	sim.runSimulation();
+    	String str = sim.getGrid();
+    	//sim.runSimulation();
     	tv.setText("Done Simulating");
 
     }
