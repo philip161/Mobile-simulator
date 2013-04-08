@@ -13,7 +13,7 @@ import android.widget.TextView;;
 public class MainActivity extends Activity {
 
 	private TextView tv;
-	private int numPresses = 0;
+	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
