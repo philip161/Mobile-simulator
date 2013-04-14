@@ -15,7 +15,7 @@ public class MobileSimulation {
 	private arrivalTimes = new int[4];
 	private final int[] sourceX = { 35, 0, 88, 83 }; //these are the x coordinates of the four sources on the map; increasing steetid
 	private final int[] sourceY = { 0, 21, 39, 68 };//these are the y coordinates of the four sources on the map; increasing steetid
-	
+	public boolean[] trafficLightStatus = { false, false, false, false };
 	/**
 	 * Setup traffic grid
 	 */
@@ -43,6 +43,7 @@ public class MobileSimulation {
 			updateGrid(line);
 		}
 	}
+	
 	private void updateGrid(String line){
 		
 		//street id,x start,y start,width,height,directions,vertical(1)/horizontal(0)
@@ -132,6 +133,7 @@ public class MobileSimulation {
 		}
 		return CellType.NORMAL;
 	}
+	
 	public void readFromMemory(){
 		String [] data = {
 				"69",
@@ -163,13 +165,13 @@ public class MobileSimulation {
 		}
 		
 	}
+	
 	public void getData(){
-		
 		//readFile();
 		readFromMemory();
 		printGrid();
-		
 	}
+	
 	public void printGrid(){
 		
 		System.out.println(getGrid());
@@ -178,6 +180,7 @@ public class MobileSimulation {
 		getData();
 		initializeRoads( numberOfInitialCars );
 		for(int tick = 0; tick < ticks; tick++ ){
+			manageTrafficLights( tick );
 			for( int streetId = 0; streetId < 11; streetId++ ){
 				//determine if cars can flow
 					//if so, make all cars increment along the direction of the cell FROM END TO BEGINNING, if the cell is normal, else
@@ -190,6 +193,18 @@ public class MobileSimulation {
 		}	
 		
 	}
+	
+	public void manageTrafficLights( int tick ){
+		if ( tick == 0 ) {
+			//initialize traffic lights
+		} else {
+			for ( int i = 0; i < 4; i++ ){
+				if ( tick%30 == 0 ) {
+					trafficLightStatus[i] = !trafficLightStatus[i];
+				}
+			}
+		}
+	}		
 	
 	public void initializeRoads( int numberOfInitialCars ){
 		//loop through the roads and randomly plant cars on ramdom cells that are free 
@@ -229,6 +244,7 @@ public class MobileSimulation {
 		}
 		return str;
 	}
+	
 	public static void main(String[]args){
 		
 		new MobileSimulation().runSimulation();
