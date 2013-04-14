@@ -3,14 +3,18 @@ package mobile_simulator.models;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
+import java.lang.Math;
 
 import mobile_simulator.models.TrafficCell.CellType;
 
 public class MobileSimulation {
 	
-	private TrafficCell [][] grid;
+	private TrafficCell [][] grid; // The first index is the y coordinate measured from the top; the second index is the x coordinate measured from the left.
 	private String inputFilename="simulation_input.txt";
 	private int height,width;
+	private arrivalTimes = new int[4];
+	private final int[] sourceX = { 35, 0, 88, 83 }; //these are the x coordinates of the four sources on the map; increasing steetid
+	private final int[] sourceY = { 0, 21, 39, 68 };//these are the y coordinates of the four sources on the map; increasing steetid
 	
 	/**
 	 * Setup traffic grid
@@ -79,7 +83,7 @@ public class MobileSimulation {
 		if( x==0 && directions.charAt(3)=='1'){
 			return CellType.SINK;
 		}
-		//on left border headed east is a source
+		//on left border headed east is a source. streetid is 2
 		if( x==0 && directions.charAt(1)=='1'){
 			return CellType.SOURCE;
 		}
@@ -87,7 +91,7 @@ public class MobileSimulation {
 		if( x==width-1 && directions.charAt(1)=='1'){
 			return CellType.SINK;
 		}
-		//on right border headed west is a source
+		//on right border headed west is a source. streetid is 8
 		if( x==width-1 && directions.charAt(3)=='1'){
 			return CellType.SOURCE;
 		}
@@ -95,7 +99,7 @@ public class MobileSimulation {
 		if( y==0 && directions.charAt(0)=='1'){
 			return CellType.SINK;
 		}
-		//on top border headed south
+		//on top border headed south. streetid is 0
 		if( y==0 && directions.charAt(2)=='1'){
 			return CellType.SOURCE;
 		}
@@ -103,7 +107,7 @@ public class MobileSimulation {
 		if( y==height-1 && directions.charAt(2)=='1'){
 			return CellType.SINK;
 		}
-		//on bottom border headed north
+		//on bottom border headed north. streetid is 10
 		if( y==height-1 && directions.charAt(0)=='1'){
 			return CellType.SOURCE;
 		}
@@ -170,11 +174,51 @@ public class MobileSimulation {
 		
 		System.out.println(getGrid());
 	}
-	public void runSimulation(){
-		
+	public void runSimulation(int ticks, int numberOfInitialCars){
 		getData();
+		initializeRoads( numberOfInitialCars );
+		for(int tick = 0; tick < ticks; tick++ ){
+			for( int streetId = 0; streetId < 11; streetId++ ){
+				//determine if cars can flow
+					//if so, make all cars increment along the direction of the cell FROM END TO BEGINNING, if the cell is normal, else
+						//make the car turn into the other road segment
+					//if not, make all cars but, the ones that are buffered up at the end flow FROM END TO BEGINNING	
+					
+			//have a method of a car moving from one cell to the other and set a null pointer and transfer the id to the next one		
+			}
+			manageArrivals( tick );
+		}	
 		
 	}
+	
+	public void initializeRoads( int numberOfInitialCars ){
+		//loop through the roads and randomly plant cars on ramdom cells that are free 
+	}
+	
+	public boolean isStreetFlowing( int streetId ){
+		boolean isFlowing = true;
+		//loop through the roads and check if there is a signal thats red, if so, set isFlowing to false
+		return isFlowing;
+	}	
+	
+	public void manageArrivals( int tick ){
+		if ( tick == 0 ) {
+			arrivalTimes[0] = round( -1/(1/60)*log( random() ) ); // draws an Exponential(lamda = 1/60 cars/tick) variate for steetId 0's source
+			arrivalTimes[1] = round( -1/(1/60)*log( random() ) ); // draws an Exponential(lamda = 1/60 cars/tick) variate for steetId 2's source		
+			arrivalTimes[2] = round( -1/(1/60)*log( random() ) ); // draws an Exponential(lamda = 1/60 cars/tick) variate for steetId 8's source
+			arrivalTimes[3] = round( -1/(1/60)*log( random() ) ); // draws an Exponential(lamda = 1/60 cars/tick) variate for steetId 10's source
+		} else {
+			for ( int i = 0; i < 4; i++ ){
+				if ( arrivalTimes[i] == tick ) {
+					if ( grid[sourceX][sourceY].vehicle == NULL ) { //if there is no vehicle in the patch
+						grid[sourceX][sourceY].vehicle = new Vehicle( tick ); //introduce a new car at the streetId's source
+					}	
+					arrivalTimes[0] = round( -1/(1/60)*log( random() ) ); // draws a fresh Exponential(lamda = 1/60 cars/tick) variate for the given source where a car just arrived
+				}
+			}
+		}
+	}	
+	
 	public String getGrid(){
 		String str = "";
 		for(int i=0;i<height;i++){
