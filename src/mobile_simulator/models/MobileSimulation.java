@@ -182,17 +182,27 @@ public class MobileSimulation {
 		for(int tick = 0; tick < ticks; tick++ ){
 			manageTrafficLights( tick );
 			for( int streetId = 0; streetId < 11; streetId++ ){
-				//determine if cars can flow
-					//if so, make all cars increment along the direction of the cell FROM END TO BEGINNING, if the cell is normal, else
-						//make the car turn into the other road segment
-					//if not, make all cars but, the ones that are buffered up at the end flow FROM END TO BEGINNING	
-					
-			//have a method of a car moving from one cell to the other and set a null pointer and transfer the id to the next one		
+				//for each cell in streetId	(starting from the exit point of the street against the direction of traffic )
+					//case switch current TrafficCell.TYPE
+					//NORMAL:
+						//if there is a vehicle in the current cell and a NULL pointer in the next cell
+							//moveForward the vehicles (reassociate vehicle to new cell) 
+					//INTERSECTION
+						//if (signal[i] = true)
+							//make the car turn into the other road segment, based on turn probability (if rand() < turnb probability)
+					//SINK
+						//destroy the car, set NULL pointer	
 			}
 			manageArrivals( tick );
 		}	
 		
 	}
+	
+	//have a method of a car moving from one cell to the other and set a null pointer and transfer the id to the next one	
+	public void advanceCar( trafficCell cell, int streetId, int[] directionVector ){
+	
+	}
+	
 	
 	public void manageTrafficLights( int tick ){
 		if ( tick == 0 ) {
