@@ -12,7 +12,7 @@ public class MobileSimulation {
 	private TrafficCell [][] grid; // The first index is the y coordinate measured from the top; the second index is the x coordinate measured from the left.
 	private String inputFilename="simulation_input.txt";
 	private int height,width;
-	private arrivalTimes = new int[4];
+	private int[] arrivalTimes = new int[4];
 	private final int[] sourceX = { 35, 0, 88, 83 }; //these are the x coordinates of the four sources on the map; increasing steetid
 	private final int[] sourceY = { 0, 21, 39, 68 };//these are the y coordinates of the four sources on the map; increasing steetid
 	public boolean[] trafficLightStatus = { false, false, false, false };
@@ -199,7 +199,7 @@ public class MobileSimulation {
 	}
 	
 	//have a method of a car moving from one cell to the other and set a null pointer and transfer the id to the next one	
-	public void advanceCar( trafficCell cell, int streetId, int[] directionVector ){
+	public void advanceCar( TrafficCell cell, int streetId, int[] directionVector ){
 	
 	}
 	
@@ -228,17 +228,17 @@ public class MobileSimulation {
 	
 	public void manageArrivals( int tick ){
 		if ( tick == 0 ) {
-			arrivalTimes[0] = round( -1/(1/60)*log( random() ) ); // draws an Exponential(lamda = 1/60 cars/tick) variate for steetId 0's source
-			arrivalTimes[1] = round( -1/(1/60)*log( random() ) ); // draws an Exponential(lamda = 1/60 cars/tick) variate for steetId 2's source		
-			arrivalTimes[2] = round( -1/(1/60)*log( random() ) ); // draws an Exponential(lamda = 1/60 cars/tick) variate for steetId 8's source
-			arrivalTimes[3] = round( -1/(1/60)*log( random() ) ); // draws an Exponential(lamda = 1/60 cars/tick) variate for steetId 10's source
+			arrivalTimes[0] = (int) Math.round(  -1/(1/60)*Math.log( Math.random() ) ); // draws an Exponential(lamda = 1/60 cars/tick) variate for steetId 0's source
+			arrivalTimes[1] = (int) Math.round(   -1/(1/60)*Math.log( Math.random() ) ); // draws an Exponential(lamda = 1/60 cars/tick) variate for steetId 2's source		
+			arrivalTimes[2] = (int) Math.round(   -1/(1/60)*Math.log( Math.random() ) ); // draws an Exponential(lamda = 1/60 cars/tick) variate for steetId 8's source
+			arrivalTimes[3] = (int) Math.round(    -1/(1/60)*Math.log( Math.random() ) ); // draws an Exponential(lamda = 1/60 cars/tick) variate for steetId 10's source
 		} else {
 			for ( int i = 0; i < 4; i++ ){
 				if ( arrivalTimes[i] == tick ) {
-					if ( grid[sourceX][sourceY].vehicle == NULL ) { //if there is no vehicle in the patch
-						grid[sourceX][sourceY].vehicle = new Vehicle( tick ); //introduce a new car at the streetId's source
+					if ( grid[sourceX[i]][sourceY[i]].vehicle == null ) { //if there is no vehicle in the patch
+						grid[sourceX[i]][sourceY[i]].vehicle = new Vehicle( tick ); //introduce a new car at the streetId's source
 					}	
-					arrivalTimes[0] = round( -1/(1/60)*log( random() ) ); // draws a fresh Exponential(lamda = 1/60 cars/tick) variate for the given source where a car just arrived
+					arrivalTimes[0] = (int) Math.round( -1/(1/60)*Math.log( Math.random() ) ); // draws a fresh Exponential(lamda = 1/60 cars/tick) variate for the given source where a car just arrived
 				}
 			}
 		}
@@ -257,6 +257,6 @@ public class MobileSimulation {
 	
 	public static void main(String[]args){
 		
-		new MobileSimulation().runSimulation();
+		new MobileSimulation().runSimulation(5,5);
 	}
 }
