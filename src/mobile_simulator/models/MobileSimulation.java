@@ -238,7 +238,7 @@ public class MobileSimulation {
 					if ( grid[sourceX[i]][sourceY[i]].vehicle == null ) { //if there is no vehicle in the patch
 						grid[sourceX[i]][sourceY[i]].vehicle = new Vehicle( tick ); //introduce a new car at the streetId's source
 					}	
-					arrivalTimes[0] = (int) Math.round( -1/(1/60)*Math.log( Math.random() ) ); // draws a fresh Exponential(lamda = 1/60 cars/tick) variate for the given source where a car just arrived
+					arrivalTimes[0] = (int) Math.round( tick + ( -1/(1/60)*Math.log( Math.random() ) ) ); // draws a fresh Exponential(lamda = 1/60 cars/tick) variate for the given source where a car just arrived
 				}
 			}
 		}

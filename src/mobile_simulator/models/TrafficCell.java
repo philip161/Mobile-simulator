@@ -5,6 +5,7 @@ import mobile_simulator.models.TrafficCell.CellType;
 public class TrafficCell {
 	
 	private TrafficLight light;
+	public int timeSpentOnPatch;
 	public Vehicle vehicle;
 	private double [] turnProbabilities;
 	private CellType type;
