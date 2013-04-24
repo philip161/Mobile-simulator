@@ -314,17 +314,17 @@ public class MobileSimulation {
 	
 	public void manageArrivals( int tick ){
 		if ( tick == 0 ) {
-			arrivalTimes[0] = (int)Math.round( -1/(1/60)*Math.log( Math.random() ) ); // draws an Exponential(lamda = 1/60 cars/tick) variate for steetId 0's source
-			arrivalTimes[1] = (int)Math.round( -1/(1/60)*Math.log( Math.random() ) ); // draws an Exponential(lamda = 1/60 cars/tick) variate for steetId 2's source		
-			arrivalTimes[2] = (int)Math.round( -1/(1/60)*Math.log( Math.random() ) ); // draws an Exponential(lamda = 1/60 cars/tick) variate for steetId 8's source
-			arrivalTimes[3] = (int)Math.round( -1/(1/60)*Math.log( Math.random() ) ); // draws an Exponential(lamda = 1/60 cars/tick) variate for steetId 10's source
+			arrivalTimes[0] = (int)Math.round( -1/(1/60.0)*Math.log( Math.random() ) ); // draws an Exponential(lamda = 1/60 cars/tick) variate for steetId 0's source
+			arrivalTimes[1] = (int)Math.round( -1/(1/60.0)*Math.log( Math.random() ) ); // draws an Exponential(lamda = 1/60 cars/tick) variate for steetId 2's source		
+			arrivalTimes[2] = (int)Math.round( -1/(1/60.0)*Math.log( Math.random() ) ); // draws an Exponential(lamda = 1/60 cars/tick) variate for steetId 8's source
+			arrivalTimes[3] = (int)Math.round( -1/(1/60.0)*Math.log( Math.random() ) ); // draws an Exponential(lamda = 1/60 cars/tick) variate for steetId 10's source
 		} else {
 			for ( int i = 0; i < 4; i++ ){
 				if ( arrivalTimes[i] == tick ) {
 					if ( grid[sourceX[i]][sourceY[i]].vehicle == null ) { //if there is no vehicle in the patch
 						grid[sourceX[i]][sourceY[i]].vehicle = new Vehicle( tick ); //introduce a new car at the streetId's source
 					}	
-					arrivalTimes[0] = (int)Math.round( -1/(1/60)*Math.log( Math.random() ) ); // draws a fresh Exponential(lamda = 1/60 cars/tick) variate for the given source where a car just arrived
+					arrivalTimes[i] = (int)Math.round( -1/(1/60.0)*Math.log( Math.random() ) +tick ); // draws a fresh Exponential(lamda = 1/60 cars/tick) variate for the given source where a car just arrived
 				}
 			}
 		}
