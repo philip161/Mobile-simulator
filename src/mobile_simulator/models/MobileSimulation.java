@@ -18,9 +18,36 @@ public class MobileSimulation {
 	private int [] arrivalTimes = new int[4];
 	private final int[] sourceX = { 35, 0, 88, 83 }; //these are the x coordinates of the four sources on the map; increasing steetid
 	private final int[] sourceY = { 0, 21, 39, 68 };//these are the y coordinates of the four sources on the map; increasing steetid
-	public boolean[] trafficLightStatus = { false, false, false, false };
+	public boolean[] trafficLightStatus = { true, true, true };
 	public static HashMap<Integer,StreetData> streetData;
 	private static int targetVehicleId = 5;
+	
+	public static HashMap<Integer,Integer> streetIdToSignalId;
+	
+	       
+	public static void setupStreetIdToSignalId(){
+		//the signalId's are numbered in increasing order from top-left to bottom-right on the map
+		streetIdToSignalId.put(0, 0);
+        streetIdToSignalId.put(2, 0);	
+		streetIdToSignalId.put(5, 0);
+		
+		streetIdToSignalId.put(4, 1);
+		streetIdToSignalId.put(7, 1);
+		
+		
+		streetIdToSignalId.put(8, 2);
+		streetIdToSignalId.put(10, 2);		
+		
+		//These streets aren't associated to any signal
+		streetIdToSignalId.put(1, -1);
+		streetIdToSignalId.put(3, -1);
+		streetIdToSignalId.put(6, -1);
+		streetIdToSignalId.put(9, -1);			
+	}
+
+
+	   
+	
 	/**
 	 * Setup traffic grid
 	 */
@@ -48,6 +75,7 @@ public class MobileSimulation {
 			updateGrid(line);
 		}
 	}
+	
 	public void computeNewStreetState(StreetData sd,int currTime){
 
 		TrafficCell cell = null;
@@ -61,7 +89,6 @@ public class MobileSimulation {
 		
 		
 		do{
-			
 			cell.computeNextMove(currTime);
 		}while((cell = findNextCell(sd,cell)) != null );
 		
@@ -74,6 +101,8 @@ public class MobileSimulation {
 	 * Find next cell follows a type writer like pattern through a lane.
 	 * @return
 	 */
+	 
+	//typewriter 
 	public TrafficCell findNextCell(StreetData sd, TrafficCell tc){
 		
 		int row = tc.row;
@@ -263,6 +292,7 @@ public class MobileSimulation {
 		System.out.println(getGrid());
 	}
 	public void runSimulation(int ticks, int numberOfInitialCars){
+		setupStreetIdToSignalId();
 		getData();
 		initializeRoads( numberOfInitialCars );
 		for(int tick = 0; tick < ticks; tick++ ){
@@ -284,22 +314,15 @@ public class MobileSimulation {
 		
 	}
 	
-	//have a method of a car moving from one cell to the other and set a null pointer and transfer the id to the next one	
-	public void advanceCar( TrafficCell cell, int streetId, int[] directionVector ){
-	
-	}
-	
-	
 	public void manageTrafficLights( int tick ){
-		if ( tick == 0 ) {
+		if ( tick != 0 ) {
 			//initialize traffic lights
-		} else {
-			for ( int i = 0; i < 4; i++ ){
+			for ( int i = 0; i < 3; i++ ){
 				if ( tick%30 == 0 ) {
 					trafficLightStatus[i] = !trafficLightStatus[i];
 				}
 			}
-		}
+		}	
 	}		
 	
 	public void initializeRoads( int numberOfInitialCars ){
@@ -345,6 +368,8 @@ public class MobileSimulation {
 		
 		new MobileSimulation().runSimulation(5,5);
 	}
+	
+	//Where is a vehicle going?
 	public static TrafficCell getNextCell(int street, TrafficCell tc) {
 		
 		
@@ -399,8 +424,6 @@ public class MobileSimulation {
 				}
 			}
 		}
-		
 		return null;
-		
 	}
 }

@@ -6,6 +6,7 @@ public class Vehicle {
     public static int staticVehicleId = 0;
 	public int vehicleId = 0;
 	public int startTick;
+	public int timeInSystem;
 	
 	private Direction direction;
 	
@@ -29,8 +30,6 @@ public class Vehicle {
 	}
 
 	public void destroy(int time) {
-		
-		int timeInSystem = time - startTick;
-		
+		timeInSystem = time - startTick;
 	}
 }

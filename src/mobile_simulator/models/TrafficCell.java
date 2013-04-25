@@ -1,9 +1,9 @@
 package mobile_simulator.models;
 
-
+import mobile_simulator.models.MobileSimulation;
 
 public class TrafficCell {
-	
+
 	private TrafficLight light;
 	public Vehicle vehicle;
 	private double [] turnProbabilities;
@@ -27,6 +27,7 @@ public class TrafficCell {
 			this.value = value;
 		}
 	}
+	
 	public enum Direction{
 		NORTH (0),
 		SOUTH (1),
@@ -48,7 +49,6 @@ public class TrafficCell {
 				default:return null;
 			}
 		}
-		
 	}
 	
 	/*
@@ -66,9 +66,10 @@ public class TrafficCell {
 		this.street = street;
 		turnProbabilities = new double[4];
 		vehicleLeaveTime = MobileSimulation.TICK_TIME;
-	}
-	public TrafficCell(CellType type,int row,int col,int street,String directions, Direction streetDirection) {
 		
+	}
+	
+	public TrafficCell(CellType type,int row,int col,int street,String directions, Direction streetDirection) {
 		this.type = type;
 		this.row = row;
 		this.col = col;
@@ -77,18 +78,16 @@ public class TrafficCell {
 		turnProbabilities = new double[4];
 		if( type == CellType.TRAFFIC_LIGHT ){
 			computeProbabilities(directions);
+			
 		}
 		vehicleLeaveTime = MobileSimulation.TICK_TIME;
-	}
-
-	public TrafficCell computeNextCell(){
-		return null;
+		
+		
+		
 	}
 
 	public void computeProbabilities(String directions) {
 		
-		
-			
 			if( direction == Direction.NORTH ){
 				turnProbabilities[0] = .5;
 				turnProbabilities[1] = .3;
@@ -113,30 +112,21 @@ public class TrafficCell {
 				turnProbabilities[2] = .2;
 				turnProbabilities[3] = .5;
 			}
-		
-		
-		
 	}
+	
 	public String toString(){
 		return type.value+"";
 	}
+	
 	public void computeNextMove(int time) {
-		
 		int timeInCell = vehicle.getTimeInCell();
-		
 		if( vehicle!= null ){
-		
 			if( time>= vehicleLeaveTime ){
-				
 				if( type == CellType.SINK ){
-					
 					vehicle.destroy(time);
 					vehicle = null;
-					
 				}else{
-					
 					TrafficCell nextCell = MobileSimulation.getNextCell(street,this);
-					
 					if(nextCell.vehicle == null){
 						nextCell.vehicle = vehicle;
 						nextCell.vehicleLeaveTime = time + timeInCell;
@@ -147,8 +137,8 @@ public class TrafficCell {
 				}
 			}
 		}
-		
 	}
+	
 	public Direction crossIntersection(int targetVehicleId) {
 		
 		if( vehicle != null ){
