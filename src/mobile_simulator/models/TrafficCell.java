@@ -105,19 +105,19 @@ public class TrafficCell {
 	
 	//manages vehicles moving from one cell to another
 	//FIXME needs the time increment, not the actual tick time
-	public void computeNextMove(int time) {
+	public void computeNextMove(int deltaTime) {
 		int timeInCell = vehicle.getTimeInCell(); //returns 5
 		if( vehicle != null ){
-			if( time >= vehicleLeaveTime ){ // A vehicle has stayed at a cell long enough, so it jummps ahead:
+			if( deltaTime >= vehicleLeaveTime ){ // A vehicle has stayed at a cell long enough, so it jumps ahead:
 				if( type == CellType.SINK ){
-					vehicle.destroy(time);
+					vehicle.destroy(deltaTime);
 					vehicle = null;
 				//FIXME 12 add elseif for type == CellType.TRAFFIC_LIGHT: make sure to block movement if the corresponding signal is red and make sure to not go to another TRAFFIC_LIGHT while turning
 				}else{ //the cell a vehicle currently is on is a SOURCE, NORMAL, or a TRAFFIC_LIGHT
 					TrafficCell nextCell = MobileSimulation.getNextCell(street,this);
 					if(nextCell.vehicle == null){
 						nextCell.vehicle = vehicle;
-						nextCell.vehicleLeaveTime = time + timeInCell;
+						nextCell.vehicleLeaveTime = deltaTime + timeInCell;
 						vehicle = null;
 					}else{
 						++vehicleLeaveTime;

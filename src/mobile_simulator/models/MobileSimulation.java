@@ -197,8 +197,8 @@ public class MobileSimulation {
 	
 //-------------MOVE VEHICLES START-------------------	
 	//for a given street, manages all vehicles moving though its cells
-	public void computeNewStreetState(StreetData sd, int currTime){
-
+	public void computeNewStreetState(int streetId, int currTime){
+		StreetData sd = streetData.get(streetId);
 		TrafficCell cell = null;
 		//set the hook first
 		switch(sd.direction){
