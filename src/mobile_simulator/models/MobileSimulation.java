@@ -18,7 +18,7 @@ public class MobileSimulation {
 	private int [] arrivalTimes = new int[4];
 	private final int[] sourceX = { 35, 0, 88, 83 }; //these are the x coordinates of the four sources on the map; increasing steetid
 	private final int[] sourceY = { 0, 21, 39, 68 };//these are the y coordinates of the four sources on the map; increasing steetid
-	public boolean[] trafficLightStatus = { true, true, true };
+	public boolean[] trafficLightStatus = { true, true, true }; //true means that vehicles on the vertical are allowed to move
 	public static HashMap<Integer,StreetData> streetData;
 	private static int targetVehicleId = 5;
 	
@@ -55,16 +55,7 @@ public class MobileSimulation {
 		for(int tick = 0; tick < ticks; tick++ ){
 			manageTrafficLights( tick );
 			for( int streetId = 0; streetId < 11; streetId++ ){
-				//for each cell in streetId	(starting from the exit point of the street against the direction of traffic )
-					//case switch current TrafficCell.TYPE
-					//NORMAL:
-						//if there is a vehicle in the current cell and a NULL pointer in the next cell
-							//moveForward the vehicles (reassociate vehicle to new cell) 
-					//INTERSECTION
-						//if (signal[i] = true)
-							//make the car turn into the other road segment, based on turn probability (if rand() < turnb probability)
-					//SINK
-						//destroy the car, set NULL pointer	
+				computeNewStreetState(streetId, tick);
 			}
 			manageArrivals( tick );
 		}	
@@ -218,7 +209,7 @@ public class MobileSimulation {
 		}
 		
 		do{
-			cell.computeNextMove(currTime); //manages vehicles moving from one cell to another
+			cell.computeNextMove(currTime); //Found in TrafficCell.java: Manages vehicles moving from one cell to another.
 		}while((cell = findNextCell(sd,cell)) != null );
 		
 	}
@@ -277,6 +268,63 @@ public class MobileSimulation {
 		return null;
 	}
 	
+	// Only called from TrafficCell.java where a vehicle goes from one cell to another
+	// Answers the question: Where is a particular vehicle going?
+	public static TrafficCell getNextCell(int street, TrafficCell tc) {
+		
+		
+		int row = tc.row;
+		int col = tc.col;
+		
+		StreetData sd = streetData.get(street);
+		switch( sd.direction ){
+		
+		/*
+		 * If headed north
+		 * 
+		 * 		   NORTH     EAST               SOUTH             WEST
+		 *         width     width              width             width
+		 *         T   	     -------T               
+		 *   height| |  |      <-     |height      | ^ |            -------
+		 *         | *  |    --------              | | |height          ->   height
+		 *         |    |                          |   T            T-------
+		 *         
+		 *         for each lane we compute starting at the position labeled T
+		 *         going back
+		 */
+		 
+		 //if-else for TRAFFIC_LIGHT might be obsolete; see 'FIXME 12' in trafficcell.java
+			case NORTH:{
+				if(tc.type == CellType.TRAFFIC_LIGHT){
+					tc.crossIntersection(targetVehicleId); //returns a direction
+				}else{
+					return grid[--row][col];
+				}
+			}
+			case EAST:{
+				if(tc.type == CellType.TRAFFIC_LIGHT){
+					
+				}else{
+					return grid[row][++col];
+				}
+			}
+			case SOUTH:{
+				if(tc.type == CellType.TRAFFIC_LIGHT){
+					
+				}else{
+					return grid[++row][col];
+				}
+			}
+			case WEST:{
+				if(tc.type == CellType.TRAFFIC_LIGHT){
+					
+				}else{
+					return grid[row][--col];
+				}
+			}
+		}
+		return null;
+	}	
 //-------------MOVE VEHICLES END-------------------		
 
 	public void manageTrafficLights( int tick ){
@@ -308,63 +356,7 @@ public class MobileSimulation {
 		}
 	}	
 	
-	//Where is a vehicle going?; only called from TrafficCell.java where a vehicle goes from one cell to another
-	public static TrafficCell getNextCell(int street, TrafficCell tc) {
-		
-		
-		int row = tc.row;
-		int col = tc.col;
-		
-		StreetData sd = streetData.get(street);
-		switch( sd.direction ){
-		
-		/*
-		 * If headed north
-		 * 
-		 * 		   NORTH     EAST               SOUTH             WEST
-		 *         width     width              width             width
-		 *         T   	     -------T               
-		 *   height| |  |      <-     |height      | ^ |            -------
-		 *         | *  |    --------              | | |height          ->   height
-		 *         |    |                          |   T            T-------
-		 *         
-		 *         for each lane we compute starting at the position labeled T
-		 *         going back
-		 */
-			case NORTH:{
-				
-				if(tc.type == CellType.TRAFFIC_LIGHT){
-					
-					tc.crossIntersection(targetVehicleId); //returns a direction
-					
-				}else{
-					return grid[--row][col];
-				}
-			}
-			case EAST:{
-				if(tc.type == CellType.TRAFFIC_LIGHT){
-					
-				}else{
-					return grid[row][++col];
-				}
-			}
-			case SOUTH:{
-				if(tc.type == CellType.TRAFFIC_LIGHT){
-					
-				}else{
-					return grid[++row][col];
-				}
-			}
-			case WEST:{
-				if(tc.type == CellType.TRAFFIC_LIGHT){
-					
-				}else{
-					return grid[row][--col];
-				}
-			}
-		}
-		return null;
-	}
+
 	
 	//-------------CODE GRAVE START----------------
 	//tools for I/O, debugging and some extension ideas
