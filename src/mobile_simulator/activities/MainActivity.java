@@ -25,7 +25,7 @@ public class MainActivity extends Activity {
     	String str = sim.getGrid();
 		final int TICKS = 3600;
 		final int NUMBER_OF_INITIAL_CARS = 30;
-    	//sim.runSimulation(TICKS, NUMBER_OF_INITIAL_CARS);
+    	sim.runSimulation(TICKS, NUMBER_OF_INITIAL_CARS);
     	tv.setText("Done Simulating");
 
     }
