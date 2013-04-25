@@ -118,8 +118,10 @@ public class TrafficCell {
 		return type.value+"";
 	}
 	
+	//manages vehicles moving from one cell to another
+	//note: needs the time increment, not the actual tick time
 	public void computeNextMove(int time) {
-		int timeInCell = vehicle.getTimeInCell();
+		int timeInCell = vehicle.getTimeInCell(); //returns 5
 		if( vehicle!= null ){
 			if( time>= vehicleLeaveTime ){
 				if( type == CellType.SINK ){
