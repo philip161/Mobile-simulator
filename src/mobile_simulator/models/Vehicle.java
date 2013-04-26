@@ -29,10 +29,9 @@ public class Vehicle {
 		statistics = stats;
     }
 
-	public int getTimeInCell() {
+	public double getTimeInCell() {
 		
-		
-		return 5;
+		return .5;
 	}
 
 	public void destroy(int time,int street) {

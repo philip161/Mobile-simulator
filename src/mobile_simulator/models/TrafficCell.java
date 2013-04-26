@@ -11,7 +11,7 @@ public class TrafficCell {
 	private double [] turnProbabilities;
 	public int row;
 	public int col;
-	public int vehicleLeaveTime;
+	public double vehicleLeaveTime;
 	public int street;
 	public CellType type;
 	private Direction streetDirection;
@@ -24,7 +24,7 @@ public class TrafficCell {
 		SINK (3),
 		TRAFFIC_LIGHT (4);
 		
-		private int value;
+		public int value;
 		
 		CellType(int value){
 			this.value = value;
@@ -138,7 +138,7 @@ public class TrafficCell {
 		
 		if( vehicle != null ){
 			
-			int timeInCell = vehicle.getTimeInCell(); //returns 5
+			double timeInCell = vehicle.getTimeInCell(); //returns 5
 			if( time >= vehicleLeaveTime ){ // A vehicle has stayed at a cell long enough, so it jumps ahead:
 				if( type == CellType.SINK ){
 					vehicle.destroy(time,street);

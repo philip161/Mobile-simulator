@@ -22,7 +22,7 @@ public class MobileSimulation {
 	public static boolean[] trafficLightStatus = { true, true, true }; //true means that vehicles on the vertical are allowed to move
 	public static HashMap<Integer,StreetData> streetData;
 	private static int targetVehicleId = 5;
-	private static final int SIM_TIME = 1500;
+	private static final int SIM_TIME = 3600;
 	private TrafficStatistics statistics;
 	public static final int TICK_CHANGE = 1;
 	public static HashMap<Integer,Integer> streetIdToSignalId;
@@ -50,7 +50,7 @@ public class MobileSimulation {
 	}	
 	public TrafficStatistics runSimulation() {
 		
-		return runSimulation(SIM_TIME,5);
+		return runSimulation(SIM_TIME,30);
 	}
 
 	public TrafficStatistics runSimulation(int ticks, int numberOfInitialCars){
@@ -405,9 +405,10 @@ public class MobileSimulation {
 		}	
 	}		
 	public void manageArrivals2( int tick ){
+		double rate = 1.0/15;
 		if ( tick == 0 ) {
 			for(TrafficCell source:sources.keySet()){
-				int time = (int)Math.round( -1/(1/60.0)*Math.log( Math.random() ) );
+				int time = (int)Math.exp(rate);
 				sources.put(source, time);
 			}
 		}else{
@@ -417,8 +418,9 @@ public class MobileSimulation {
 					if(grid[source.row][source.col].vehicle==null){
 						grid[source.row][source.col].vehicle=new Vehicle(tick,source.street,statistics);
 						numInSystem++;
+						statistics.created++;
 					}
-					int time = (int)Math.round( -1/(1/60.0)*Math.log( Math.random() ) );
+					int time = (int)Math.exp(rate);
 					sources.put(source, tick+time);
 					
 				}
@@ -484,7 +486,7 @@ public class MobileSimulation {
 		String str = "";
 		for(int i=0;i<height;i++){
 			for(int j=0;j<width;j++){
-				str+=grid[i][j]+" ";
+				str+=grid[i][j].type.value+" ";
 			}
 			str+="\n";
 		}
@@ -506,8 +508,9 @@ public class MobileSimulation {
 	}
 	public static void main(String[]args){
 		MobileSimulation sim = new MobileSimulation();
-		TrafficStatistics stats = sim.runSimulation();
+		TrafficStatistics stats = sim.runSimulation(3000,10);
 		System.out.println(stats.getStats());
-		System.out.println(stats.getVehicleStats(50));
+		System.out.println(stats.getVehicleStats(1));
+		//stats.writeNumInSystemToFile("numInSystemOverTime.csv");
 	}
 }
