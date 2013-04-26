@@ -78,6 +78,7 @@ public class MobileSimulation {
 		height = 69;
 		width = 89;
 		String [] data = {
+				//street id,x start,y start,width,height,directions,vertical(1)/horizontal(0)
 				"0,35,0,4,20,0111,2,_463,0253",
 				"1,83,0,4,20,1000,0,____,0000",
 				"2,0,21,35,1,0110,1,046_,0640",
@@ -91,14 +92,17 @@ public class MobileSimulation {
 				"10,83,41,4,28,1100,0,79__,6400"
 		};
 		
+		//initialize grid and streetData
 		grid = new TrafficCell[height][width];
 		streetData = new HashMap<Integer,StreetData>();
 		
+		// start by setting all cells to CellType.NORMAL
 		for(int i=0;i<height;i++){
 			for(int j=0;j<width;j++){
-				grid[i][j]=new TrafficCell(CellType.NORMAL,i,j,-1);
+				grid[i][j]=new TrafficCell(CellType.EMPTY,i,j,-1);
 			}
 		}
+		//then add in the special types other than normal
 		for(int i=0;i<data.length;i++){
 			updateGrid(data[i]);
 		}
@@ -125,7 +129,6 @@ public class MobileSimulation {
 		streetData.put(street, new StreetData(street,startx,starty,width,height,direction));
 		
 		for(int i=starty;i<endy;i++){
-			
 			for(int j=startx;j<endx;j++){
 				//System.out.println("x: "+j+" y: "+i+" startx: "+startx+" endx: "+endx+" starty: "+starty+" endy: "+endy);
 				CellType type = computeType(j,i,startx,endx,starty,endy,directions,streetDirection);

@@ -9,55 +9,57 @@ public class GraphicsHelper {
 	public GraphicsHelper() {
 		// TODO Auto-generated constructor stub
 	}
-	
-	// this function should be called by a graphics object which has access to the
+
+	// this function should be called by a graphics object which has access to
+	// the
 	// grid of traffic cells in the MobileSimulation object
-	public static Bitmap CreateBitmapFromGridOfCells(TrafficCell [][] i_grid)
-	{
-		// The first index is the y coordinate measured from the top; the second index is the x coordinate measured from the left.
+	public static Bitmap CreateBitmapFromGridOfCells(TrafficCell[][] i_grid) {
+		// The first index is the y coordinate measured from the top; the second
+		// index is the x coordinate measured from the left.
 		int t_height = i_grid.length;
 		int t_width = 0;
-		if(i_grid[0]!=null)
+		if (i_grid[0] != null)
 			t_width = i_grid[0].length;
-		
+
 		Bitmap.Config t_conf = Bitmap.Config.ARGB_8888;
 		Bitmap t_bitmap = Bitmap.createBitmap(t_width, t_height, t_conf);
-		
-		//this is a slow method
-		//TODO: change this to setPixels or to copyPixelsFrom...
-		for(int i=0;i<t_height;i++)
-		{
-			for(int j=0;j<t_width;j++)
-			{
-				t_bitmap.setPixel(j, i, CalulateColorFromTrafficCell(i_grid[i][j],0));
+
+		// this is a slow method
+		// TODO: change this to setPixels or to copyPixelsFrom...
+		for (int i = 0; i < t_height; i++) {
+			for (int j = 0; j < t_width; j++) {
+				t_bitmap.setPixel(j, i,
+						CalulateColorFromTrafficCell(i_grid[i][j], 0));
 			}
 		}
 		return t_bitmap;
 	}
 
-	// this method is used by CreateBitmapFromGridOfCells to define several modes of
+	// this method is used by CreateBitmapFromGridOfCells to define several
+	// modes of
 	// mapping the traffic cells into color
-	private static int CalulateColorFromTrafficCell(TrafficCell i_cell, int i_mode)
-	{
+	private static int CalulateColorFromTrafficCell(TrafficCell i_cell,
+			int i_mode) {
 		int t_color = 0;
-		//byte t_alpha = 0;
-		//byte t_red = 0;
-		//byte t_green = 0;
-		//byte t_blue = 0;
-		//t_color = Color.argb(t_alpha, t_red, t_green, t_blue);
+		// byte t_alpha = 0;
+		// byte t_red = 0;
+		// byte t_green = 0;
+		// byte t_blue = 0;
+		// t_color = Color.argb(t_alpha, t_red, t_green, t_blue);
 		t_color = Color.BLACK;
-		
-		switch(i_mode)
-		{
+
+		switch (i_mode) {
 		case 0:
-		switch(i_cell.type)
-		{
+			switch (i_cell.type) {
+			case EMPTY:
+				t_color = Color.DKGRAY;
+				break;
 			case NORMAL:
 				t_color = Color.GRAY;
-			break;
+				break;
 			case SINK:
 				t_color = Color.RED;
-			break;
+				break;
 			case SOURCE:
 				t_color = Color.BLUE;
 				break;
@@ -67,10 +69,10 @@ public class GraphicsHelper {
 			default:
 				t_color = Color.BLACK;
 				break;
+			}
+			break;
 		}
-		break;
-		}
-		
+
 		return t_color;
 	}
 }

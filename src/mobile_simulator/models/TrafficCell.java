@@ -18,10 +18,11 @@ public class TrafficCell {
 	public HashMap<Direction,Integer>streetChanges;
 	
 	public enum CellType{
-		NORMAL (0),
-		SOURCE (1),
-		SINK (2),
-		TRAFFIC_LIGHT (3);
+		EMPTY (0),
+		NORMAL (1),
+		SOURCE (2),
+		SINK (3),
+		TRAFFIC_LIGHT (4);
 		
 		private int value;
 		
