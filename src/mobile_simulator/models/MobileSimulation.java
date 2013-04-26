@@ -452,6 +452,11 @@ public class MobileSimulation {
 		}
 		return str;
 	}
+		
+	public TrafficCell[][] getGridCells()
+	{
+		return grid;
+	}
 	
 	public void initializeRoads( int numberOfInitialCars ){
 		//loop through the roads and randomly plant cars on ramdom cells that are free 

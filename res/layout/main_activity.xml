@@ -16,4 +16,12 @@
         android:layout_marginTop="58dp"
         android:text="TextView" />
 
+    <ImageView
+        android:id="@+id/imageViewMap"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_below="@+id/textView"
+        android:layout_centerHorizontal="true"
+        android:src="@drawable/ic_launcher" />
+
 </RelativeLayout>
