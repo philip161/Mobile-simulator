@@ -1,5 +1,7 @@
 package mobile_simulator.models;
 
+import java.util.HashMap;
+
 import mobile_simulator.models.MobileSimulation;
 
 public class TrafficCell {
@@ -7,13 +9,13 @@ public class TrafficCell {
 	private TrafficLight light;
 	public Vehicle vehicle;
 	private double [] turnProbabilities;
-	private Direction direction;
 	public int row;
 	public int col;
 	public int vehicleLeaveTime;
 	public int street;
 	public CellType type;
 	private Direction streetDirection;
+	public HashMap<Direction,Integer>streetChanges;
 	
 	public enum CellType{
 		NORMAL (0),
@@ -30,8 +32,8 @@ public class TrafficCell {
 	
 	public enum Direction{
 		NORTH (0),
-		SOUTH (1),
-		EAST (2),
+		EAST (1),
+		SOUTH (2),
 		WEST (3);
 		
 		private int value;
@@ -61,39 +63,64 @@ public class TrafficCell {
 		vehicleLeaveTime = MobileSimulation.TICK_TIME;
 	}
 	
-	public TrafficCell(CellType type,int row,int col,int street,String directions, Direction streetDirection) {
+	public TrafficCell(CellType type,int row,int col,int street,String directions, Direction streetDirection, String changeStreets, String turnProbabilities2) {
 		this.type = type;
 		this.row = row;
 		this.col = col;
 		this.street = street;
 		this.streetDirection = streetDirection;
 		turnProbabilities = new double[4];
+		
 		if( type == CellType.TRAFFIC_LIGHT ){
-			computeProbabilities(directions);
+			
+			char [] charProbs = turnProbabilities2.toCharArray(); 
+			for(int i=0;i<turnProbabilities.length;i++){
+				
+				if( charProbs[i] == '@' ){
+					turnProbabilities[i]=1;
+				}else{
+					turnProbabilities[i]= Integer.parseInt(""+charProbs[i])/10.0;
+				}
+				//System.out.println(turnProbabilities[i]+" ");
+			}
+			//System.out.println();
+			streetChanges = new HashMap<Direction,Integer>();
+			
+			char [] chStreets = changeStreets.toCharArray();
+			//System.out.println("Streets: "+chStreets.length);
+			//for(char c:chStreets)System.out.println("*"+c);
+			for(int i=0;i<chStreets.length;i++){
+				//System.out.println("CHAR: "+chStreets[i]);
+				if(chStreets[i]!='_'){
+					Direction dir = Direction.newDirection(i);
+				
+					streetChanges.put(dir, Integer.parseInt(""+chStreets[i]));
+				}
+			}
 		}
 		vehicleLeaveTime = MobileSimulation.TICK_TIME;
 	}
 
 	public void computeProbabilities(String directions) {
-			if( direction == Direction.NORTH ){
+			if( streetDirection == Direction.NORTH ){
 				turnProbabilities[0] = .5;
 				turnProbabilities[1] = .3;
 				turnProbabilities[2] = 0;
 				turnProbabilities[3] = .2;
 			}
-			if( direction == Direction.EAST ){
+			if( streetDirection == Direction.EAST ){
 				turnProbabilities[0] = .2;
 				turnProbabilities[1] = .5;
 				turnProbabilities[2] = .3;
 				turnProbabilities[3] = 0;
 			}
-			if( direction == Direction.SOUTH ){
+			if( streetDirection == Direction.SOUTH ){
 				turnProbabilities[0] = 0;
 				turnProbabilities[1] = .2;
 				turnProbabilities[2] = .5;
 				turnProbabilities[3] = .3;
 			}
-			if( direction == Direction.WEST ){
+			if( streetDirection == Direction.WEST ){
 				turnProbabilities[0] = .3;
 				turnProbabilities[1] = 0;
 				turnProbabilities[2] = .2;
@@ -105,19 +132,33 @@ public class TrafficCell {
 	
 	//manages vehicles moving from one cell to another
 	//FIXME needs the time increment, not the actual tick time
-	public void computeNextMove(int deltaTime) {
-		int timeInCell = vehicle.getTimeInCell(); //returns 5
+	public void computeNextMove(int time) {
+		
 		if( vehicle != null ){
-			if( deltaTime >= vehicleLeaveTime ){ // A vehicle has stayed at a cell long enough, so it jumps ahead:
+			
+			int timeInCell = vehicle.getTimeInCell(); //returns 5
+			if( time >= vehicleLeaveTime ){ // A vehicle has stayed at a cell long enough, so it jumps ahead:
 				if( type == CellType.SINK ){
-					vehicle.destroy(deltaTime);
+					vehicle.destroy(time);
 					vehicle = null;
 				//FIXME 12 add elseif for type == CellType.TRAFFIC_LIGHT: make sure to block movement if the corresponding signal is red and make sure to not go to another TRAFFIC_LIGHT while turning
 				}else{ //the cell a vehicle currently is on is a SOURCE, NORMAL, or a TRAFFIC_LIGHT
+					
+					if( type == CellType.TRAFFIC_LIGHT){
+						int val = MobileSimulation.streetIdToSignalId.get(street);
+						boolean bool = MobileSimulation.trafficLightStatus[val];
+						if( (streetDirection == Direction.EAST || streetDirection == Direction.WEST) && !bool ){
+							return;
+						}
+						if( (streetDirection == Direction.NORTH || streetDirection == Direction.SOUTH) && bool ){
+							return;
+						}
+					}
+					
 					TrafficCell nextCell = MobileSimulation.getNextCell(street,this);
 					if(nextCell.vehicle == null){
 						nextCell.vehicle = vehicle;
-						nextCell.vehicleLeaveTime = deltaTime + timeInCell;
+						nextCell.vehicleLeaveTime = time + timeInCell;
 						vehicle = null;
 					}else{
 						++vehicleLeaveTime;
@@ -130,6 +171,7 @@ public class TrafficCell {
 	//FIXME might be obsolete based on above fix-me
 	//FIXME needs to return a cell, not a direction, and we have to be careful to make it not go to another TRAFFIC_LIGHT cell
 	public Direction crossIntersection(int targetVehicleId) {
+		
 		if( vehicle != null ){
 			if( vehicle.vehicleId == targetVehicleId ){
 				int max = 0;
@@ -144,10 +186,13 @@ public class TrafficCell {
 				double sum = 0;
 				for(int i=0;i<turnProbabilities.length;i++){
 					sum += turnProbabilities[i];
+					//for(int a=0;a<turnProbabilities.length;a++)System.out.print(turnProbabilities[a]+" ");
+					//System.out.println("RAND: "+rand+" SUM: "+sum);
 					if( rand < sum ){
 						return Direction.newDirection(i);
 					}
 				}
+				System.out.println("HERE");
 			}
 			return null;
 		}

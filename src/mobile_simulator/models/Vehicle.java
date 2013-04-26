@@ -6,7 +6,6 @@ public class Vehicle {
     public static int staticVehicleId = 0;
 	public int vehicleId = 0;
 	public int startTick;
-	public int timeInSystem;
 	
 	private Direction direction;
 	
@@ -30,6 +29,8 @@ public class Vehicle {
 	}
 
 	public void destroy(int time) {
-		timeInSystem = time - startTick;
+		
+		int timeInSystem = time - startTick;
+		System.out.println("Destroying vehicle "+vehicleId+"/ "+staticVehicleId);
 	}
 }

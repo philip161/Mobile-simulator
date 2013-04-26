@@ -3,6 +3,7 @@ package mobile_simulator.models;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.HashMap;
+import java.util.Random;
 import java.util.Scanner;
 import java.lang.Math;
 import mobile_simulator.models.TrafficCell.Direction;
@@ -18,13 +19,15 @@ public class MobileSimulation {
 	private int [] arrivalTimes = new int[4];
 	private final int[] sourceX = { 35, 0, 88, 83 }; //these are the x coordinates of the four sources on the map; increasing steetid
 	private final int[] sourceY = { 0, 21, 39, 68 };//these are the y coordinates of the four sources on the map; increasing steetid
-	public boolean[] trafficLightStatus = { true, true, true }; //true means that vehicles on the vertical are allowed to move
+	public static boolean[] trafficLightStatus = { true, true, true }; //true means that vehicles on the vertical are allowed to move
 	public static HashMap<Integer,StreetData> streetData;
 	private static int targetVehicleId = 5;
+	private static final int SIM_TIME = 1500;
 	
 	public static HashMap<Integer,Integer> streetIdToSignalId;
 	public static void setupStreetIdToSignalId(){
 		//the signalId's are numbered in increasing order from top-left to bottom-right on the map
+		streetIdToSignalId = new HashMap<Integer,Integer>();
 		streetIdToSignalId.put(0, 0);
         streetIdToSignalId.put(2, 0);	
 		streetIdToSignalId.put(5, 0);
@@ -45,7 +48,7 @@ public class MobileSimulation {
 	
 	//---------------RUN LOGIC START-----------------
 	public static void main(String[]args){
-		new MobileSimulation().runSimulation(5,5);
+		new MobileSimulation().runSimulation(SIM_TIME,5);
 	}	
 	
 	public void runSimulation(int ticks, int numberOfInitialCars){
@@ -55,7 +58,7 @@ public class MobileSimulation {
 		for(int tick = 0; tick < ticks; tick++ ){
 			manageTrafficLights( tick );
 			for( int streetId = 0; streetId < 11; streetId++ ){
-				computeNewStreetState(streetId, tick);
+				computeNewStreetState(streetData.get(streetId), tick);
 			}
 			manageArrivals( tick );
 		}	
@@ -75,17 +78,17 @@ public class MobileSimulation {
 		height = 69;
 		width = 89;
 		String [] data = {
-				"0,35,0,4,20,0111,2",
-				"1,83,0,4,20,1000,0",
-				"2,0,21,35,1,0110,1",
-				"3,0,20,35,1,0001,3",
-				"4,39,21,44,1,1100,1",
-				"5,39,20,44,1,0011,3",
-				"6,35,22,4,47,0111,2",
-				"7,83,22,4,17,1001,0",
-				"8,87,39,2,1,1000,3",
-				"9,87,40,2,1,0100,1",
-				"10,83,41,4,28,1100,0"
+				"0,35,0,4,20,0111,2,_463,0253",
+				"1,83,0,4,20,1000,0,____,0000",
+				"2,0,21,35,1,0110,1,046_,0640",
+				"3,0,20,35,1,0001,3,____,0000",
+				"4,39,21,44,1,1001,1,1___,@000",
+				"5,39,20,44,1,0011,3,__63,0046",
+				"6,35,22,4,47,0010,2,____,0000",
+				"7,83,22,4,17,1001,0,1__5,6004",
+				"8,87,39,2,1,1001,3,7___,@000",
+				"9,87,40,2,1,0100,1,____,0000",
+				"10,83,41,4,28,1100,0,79__,6400"
 		};
 		
 		grid = new TrafficCell[height][width];
@@ -112,6 +115,8 @@ public class MobileSimulation {
 		int height = Integer.parseInt( toks[4] );
 		String directions = toks[5];
 		int streetDirection = Integer.parseInt(toks[6]);
+		String changeStreets = toks[7];
+		String turnProbabilities = toks[8];
 		
 		int endx = startx + width;
 		int endy = starty + height;
@@ -124,7 +129,7 @@ public class MobileSimulation {
 			for(int j=startx;j<endx;j++){
 				//System.out.println("x: "+j+" y: "+i+" startx: "+startx+" endx: "+endx+" starty: "+starty+" endy: "+endy);
 				CellType type = computeType(j,i,startx,endx,starty,endy,directions,streetDirection);
-				grid[i][j] = new TrafficCell(type,i,j,street,directions,direction);
+				grid[i][j] = new TrafficCell(type,i,j,street,directions,direction,changeStreets,turnProbabilities);
 			}
 		}
 	}	
@@ -197,15 +202,15 @@ public class MobileSimulation {
 	
 //-------------MOVE VEHICLES START-------------------	
 	//for a given street, manages all vehicles moving though its cells
-	public void computeNewStreetState(int streetId, int currTime){
-		StreetData sd = streetData.get(streetId);
+	public void computeNewStreetState(StreetData sd, int currTime){
+		
 		TrafficCell cell = null;
 		//set the hook first
 		switch(sd.direction){
 			case NORTH: cell = grid[sd.startY][sd.startX];break;
-			case EAST: cell = grid[sd.startY][sd.startX+sd.width];break;
-			case SOUTH: cell = grid[sd.startY+sd.height][sd.startX+sd.width];break;
-			case WEST: cell = grid[sd.startY+sd.height][sd.startX];
+			case EAST: cell = grid[sd.startY][sd.startX+sd.width-1];break;
+			case SOUTH: cell = grid[sd.startY+sd.height-1][sd.startX+sd.width-1];break;
+			case WEST: cell = grid[sd.startY+sd.height-1][sd.startX];
 		}
 		
 		do{
@@ -237,28 +242,38 @@ public class MobileSimulation {
 		 */
 			case NORTH:{
 				
-				if(col==sd.startX+sd.width){
-					return grid[++row][sd.startX];
+				if(col==sd.startX+sd.width-1){
+					if( row == sd.startY+sd.height-1 )
+						return null;
+					else
+						return grid[++row][sd.startX];
 				}else{
 					return grid[row][++col];
 				}
 			}
 			case EAST:{
-				if(row==sd.startY+sd.height){
-					return grid[sd.startY][--col];
+				if(row==sd.startY+sd.height-1){
+					if( col == sd.startX )
+						return null;
+					else
+						return grid[sd.startY][--col];
 				}else{
 					return grid[++row][col];
 				}
 			}
 			case SOUTH:{
 				if(col==sd.startX){
-					return grid[--row][sd.startX+sd.width];
+					if( row == sd.startY )
+						return null;
+					else
+						return grid[--row][sd.startX+sd.width];
 				}else{
 					return grid[row][--col];
 				}
 			}
 			case WEST:{
 				if(row==sd.startY){
+					if( col == sd.startX+sd.width-1 )
 					return grid[sd.startY+sd.height][++col];
 				}else{
 					return grid[--row][col];
@@ -277,6 +292,15 @@ public class MobileSimulation {
 		int col = tc.col;
 		
 		StreetData sd = streetData.get(street);
+		
+		if(tc.type == CellType.TRAFFIC_LIGHT){
+			Direction dir = tc.crossIntersection(targetVehicleId); //returns a direction
+			//System.out.println("Street: "+street);
+			//System.out.println("Direction: "+dir);
+			int nextStreet = tc.streetChanges.get(dir);
+			StreetData nsSd = streetData.get(nextStreet);
+			return get1stCellNextStreet(nsSd,tc,sd.direction);
+		}
 		switch( sd.direction ){
 		
 		/*
@@ -294,37 +318,63 @@ public class MobileSimulation {
 		 */
 		 
 		 //if-else for TRAFFIC_LIGHT might be obsolete; see 'FIXME 12' in trafficcell.java
+		
+		
 			case NORTH:{
-				if(tc.type == CellType.TRAFFIC_LIGHT){
-					tc.crossIntersection(targetVehicleId); //returns a direction
-				}else{
 					return grid[--row][col];
-				}
 			}
 			case EAST:{
-				if(tc.type == CellType.TRAFFIC_LIGHT){
-					
-				}else{
 					return grid[row][++col];
-				}
+				
 			}
 			case SOUTH:{
-				if(tc.type == CellType.TRAFFIC_LIGHT){
-					
-				}else{
 					return grid[++row][col];
-				}
 			}
 			case WEST:{
-				if(tc.type == CellType.TRAFFIC_LIGHT){
-					
-				}else{
 					return grid[row][--col];
-				}
 			}
 		}
 		return null;
 	}	
+	private static TrafficCell get1stCellNextStreet(StreetData sd,TrafficCell oldCell,Direction direction){
+		Random rand = new Random();
+		switch(sd.direction){
+			case NORTH:{
+				if(direction==Direction.NORTH){
+					return grid[sd.startY+sd.height][oldCell.col];
+				}else{
+					
+					int col = sd.startX + rand.nextInt(sd.width);
+					return grid[sd.startY+sd.height][col];
+				}
+			}
+			case EAST:{
+				if(direction==Direction.EAST){
+					return grid[oldCell.row][sd.startX];
+				}else{
+					return grid[sd.startY][sd.startX];
+				}
+			}
+			case SOUTH:{
+				if(direction==Direction.SOUTH){
+					return grid[sd.startY][oldCell.col];
+				}else{
+					
+					int col = sd.startX + rand.nextInt(sd.width);
+					return grid[sd.startY][col];
+				}
+			}
+			case WEST:{
+				if(direction==Direction.WEST){
+					return grid[oldCell.row][sd.startX+sd.width];
+				}else{
+					return grid[sd.startY][sd.startX+sd.width];
+				}
+			}
+		}
+		return null;
+		
+	}
 //-------------MOVE VEHICLES END-------------------		
 
 	public void manageTrafficLights( int tick ){
@@ -347,8 +397,8 @@ public class MobileSimulation {
 		} else {
 			for ( int i = 0; i < 4; i++ ){
 				if ( arrivalTimes[i] == tick ) {
-					if ( grid[sourceX[i]][sourceY[i]].vehicle == null ) { //if there is no vehicle in the patch
-						grid[sourceX[i]][sourceY[i]].vehicle = new Vehicle( tick ); //introduce a new car at the streetId's source
+					if ( grid[sourceY[i]][sourceX[i]].vehicle == null ) { //if there is no vehicle in the patch
+						grid[sourceY[i]][sourceX[i]].vehicle = new Vehicle( tick ); //introduce a new car at the streetId's source
 					}	
 					arrivalTimes[i] = (int)Math.round( -1/(1/60.0)*Math.log( Math.random() ) +tick ); // draws a fresh Exponential(lamda = 1/60 cars/tick) variate for the given source where a car just arrived
 				}
