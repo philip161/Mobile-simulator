@@ -14,21 +14,22 @@ public class GraphicsHelper {
 	// grid of traffic cells in the MobileSimulation object
 	public static Bitmap CreateBitmapFromGridOfCells(TrafficCell [][] i_grid)
 	{
-		int t_width = i_grid.length;
-		int t_height = 0;
+		// The first index is the y coordinate measured from the top; the second index is the x coordinate measured from the left.
+		int t_height = i_grid.length;
+		int t_width = 0;
 		if(i_grid[0]!=null)
-			t_height = i_grid[0].length;
+			t_width = i_grid[0].length;
 		
 		Bitmap.Config t_conf = Bitmap.Config.ARGB_8888;
 		Bitmap t_bitmap = Bitmap.createBitmap(t_width, t_height, t_conf);
 		
 		//this is a slow method
 		//TODO: change this to setPixels or to copyPixelsFrom...
-		for(int i=0;i<t_width;i++)
+		for(int i=0;i<t_height;i++)
 		{
-			for(int j=0;j<t_height;j++)
+			for(int j=0;j<t_width;j++)
 			{
-				t_bitmap.setPixel(i, j, CalulateColorFromTrafficCell(i_grid[i][j],0));
+				t_bitmap.setPixel(j, i, CalulateColorFromTrafficCell(i_grid[i][j],0));
 			}
 		}
 		return t_bitmap;
