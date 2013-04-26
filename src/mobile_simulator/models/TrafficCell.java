@@ -14,7 +14,7 @@ public class TrafficCell {
 	public int vehicleLeaveTime;
 	public int street;
 	public CellType type;
-	private Direction streetDirection;
+	public Direction streetDirection;
 	public HashMap<Direction,Integer>streetChanges;
 	
 	public enum CellType{

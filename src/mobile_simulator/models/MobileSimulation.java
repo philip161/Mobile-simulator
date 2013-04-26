@@ -103,12 +103,15 @@ public class MobileSimulation {
 				"10,83,41,4,28,1100,0,79__,6400"
 		};
 		
+		
+		//initialize the grid and streetData
 		grid = new TrafficCell[height][width];
 		streetData = new HashMap<Integer,StreetData>();
 		
+		// set the traffic cells to EMPTY
 		for(int i=0;i<height;i++){
 			for(int j=0;j<width;j++){
-				grid[i][j]=new TrafficCell(CellType.NORMAL,i,j,-1);
+				grid[i][j]=new TrafficCell(CellType.EMPTY,i,j,-1);
 			}
 		}
 		for(int i=0;i<data.length;i++){
@@ -320,7 +323,7 @@ public class MobileSimulation {
 		}
 		switch( sd.direction ){
 		
-		/*
+		/* 
 		 * If headed north
 		 * 
 		 * 		   NORTH     EAST               SOUTH             WEST
@@ -464,7 +467,7 @@ public class MobileSimulation {
 		grid = new TrafficCell[height][width];
 		for(int i=0;i<height;i++){
 			for(int j=0;j<width;j++){
-				grid[i][j]=new TrafficCell(CellType.NORMAL,i,j,-1);
+				grid[i][j]=new TrafficCell(CellType.EMPTY,i,j,-1);
 			}
 		}
 		//System.out.println("Width: "+width+" height: "+height);

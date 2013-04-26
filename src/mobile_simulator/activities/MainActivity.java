@@ -30,8 +30,7 @@ public class MainActivity extends Activity {
 		final int NUMBER_OF_INITIAL_CARS = 30;
     	TrafficStatistics stats = sim.runSimulation(TICKS, NUMBER_OF_INITIAL_CARS);
     	tv.setText(stats.getVehicleStats(50));
-    	m_imageViewMap.setImageBitmap(GraphicsHelper.CreateBitmapFromGridOfCells(sim.getGridCells()));
-
+    	m_imageViewMap.setImageBitmap(GraphicsHelper.CreateBitmapFromGridOfCells(sim.getGridCells(),0,true));
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
