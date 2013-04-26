@@ -23,8 +23,12 @@ public class MobileSimulation {
 	public static HashMap<Integer,StreetData> streetData;
 	private static int targetVehicleId = 5;
 	private static final int SIM_TIME = 1500;
-	
+	private TrafficStatistics statistics;
+	public static final int TICK_CHANGE = 1;
 	public static HashMap<Integer,Integer> streetIdToSignalId;
+	public static int numInSystem;
+	private HashMap<TrafficCell,Integer>sources;
+	
 	public static void setupStreetIdToSignalId(){
 		//the signalId's are numbered in increasing order from top-left to bottom-right on the map
 		streetIdToSignalId = new HashMap<Integer,Integer>();
@@ -43,26 +47,34 @@ public class MobileSimulation {
 		streetIdToSignalId.put(3, -1);
 		streetIdToSignalId.put(6, -1);
 		streetIdToSignalId.put(9, -1);			
-	}
-	//---------------GLOBALS END---------------------
-	
-	//---------------RUN LOGIC START-----------------
-	public static void main(String[]args){
-		new MobileSimulation().runSimulation(SIM_TIME,5);
 	}	
-	
-	public void runSimulation(int ticks, int numberOfInitialCars){
+	public TrafficStatistics runSimulation() {
+		
+		return runSimulation(SIM_TIME,5);
+	}
+
+	public TrafficStatistics runSimulation(int ticks, int numberOfInitialCars){
+		
+		statistics = new TrafficStatistics(SIM_TIME);
+		numInSystem = 0;
+		sources = new HashMap<TrafficCell,Integer>();
 		setupStreetIdToSignalId();
 		getData();
 		initializeRoads( numberOfInitialCars );
-		for(int tick = 0; tick < ticks; tick++ ){
+		
+		for(int tick = 0; tick < ticks; tick+=TICK_CHANGE ){
+			statistics.updateTotalInSystem(tick, numInSystem);
 			manageTrafficLights( tick );
 			for( int streetId = 0; streetId < 11; streetId++ ){
 				computeNewStreetState(streetData.get(streetId), tick);
 			}
-			manageArrivals( tick );
+			manageArrivals2( tick );
 		}	
-	}	
+		return statistics;
+	}
+	public TrafficStatistics getStatistics(){
+		return statistics;
+	}
 	//---------------RUN LOGIC END-----------------	
 	
 	
@@ -78,7 +90,6 @@ public class MobileSimulation {
 		height = 69;
 		width = 89;
 		String [] data = {
-				//street id,x start,y start,width,height,directions,vertical(1)/horizontal(0)
 				"0,35,0,4,20,0111,2,_463,0253",
 				"1,83,0,4,20,1000,0,____,0000",
 				"2,0,21,35,1,0110,1,046_,0640",
@@ -92,17 +103,14 @@ public class MobileSimulation {
 				"10,83,41,4,28,1100,0,79__,6400"
 		};
 		
-		//initialize grid and streetData
 		grid = new TrafficCell[height][width];
 		streetData = new HashMap<Integer,StreetData>();
 		
-		// start by setting all cells to CellType.NORMAL
 		for(int i=0;i<height;i++){
 			for(int j=0;j<width;j++){
-				grid[i][j]=new TrafficCell(CellType.EMPTY,i,j,-1);
+				grid[i][j]=new TrafficCell(CellType.NORMAL,i,j,-1);
 			}
 		}
-		//then add in the special types other than normal
 		for(int i=0;i<data.length;i++){
 			updateGrid(data[i]);
 		}
@@ -129,12 +137,18 @@ public class MobileSimulation {
 		streetData.put(street, new StreetData(street,startx,starty,width,height,direction));
 		
 		for(int i=starty;i<endy;i++){
+			
 			for(int j=startx;j<endx;j++){
 				//System.out.println("x: "+j+" y: "+i+" startx: "+startx+" endx: "+endx+" starty: "+starty+" endy: "+endy);
 				CellType type = computeType(j,i,startx,endx,starty,endy,directions,streetDirection);
 				grid[i][j] = new TrafficCell(type,i,j,street,directions,direction,changeStreets,turnProbabilities);
+				if( type==CellType.SOURCE ){
+					TrafficCell cell = grid[i][j];
+					sources.put(cell, 0);
+				}
 			}
 		}
+		
 	}	
 	
 	private CellType computeType(int x, int y, int startx, int endx, int starty, int endy, String directions, int streetDirection) {
@@ -275,11 +289,12 @@ public class MobileSimulation {
 				}
 			}
 			case WEST:{
-				if(row==sd.startY){
+				if(row==sd.startY+sd.height-1){
 					if( col == sd.startX+sd.width-1 )
-					return grid[sd.startY+sd.height][++col];
+						return null;
+					return grid[sd.startY][++col];
 				}else{
-					return grid[--row][col];
+					return grid[++row][col];
 				}
 			}
 		}
@@ -298,9 +313,8 @@ public class MobileSimulation {
 		
 		if(tc.type == CellType.TRAFFIC_LIGHT){
 			Direction dir = tc.crossIntersection(targetVehicleId); //returns a direction
-			//System.out.println("Street: "+street);
-			//System.out.println("Direction: "+dir);
 			int nextStreet = tc.streetChanges.get(dir);
+			
 			StreetData nsSd = streetData.get(nextStreet);
 			return get1stCellNextStreet(nsSd,tc,sd.direction);
 		}
@@ -344,11 +358,11 @@ public class MobileSimulation {
 		switch(sd.direction){
 			case NORTH:{
 				if(direction==Direction.NORTH){
-					return grid[sd.startY+sd.height][oldCell.col];
+					return grid[sd.startY+sd.height-1][oldCell.col];
 				}else{
 					
 					int col = sd.startX + rand.nextInt(sd.width);
-					return grid[sd.startY+sd.height][col];
+					return grid[sd.startY][sd.startX+sd.width-1];
 				}
 			}
 			case EAST:{
@@ -369,9 +383,9 @@ public class MobileSimulation {
 			}
 			case WEST:{
 				if(direction==Direction.WEST){
-					return grid[oldCell.row][sd.startX+sd.width];
+					return grid[oldCell.row][sd.startX+sd.width-1];
 				}else{
-					return grid[sd.startY][sd.startX+sd.width];
+					return grid[sd.startY][sd.startX+sd.width-1];
 				}
 			}
 		}
@@ -390,7 +404,27 @@ public class MobileSimulation {
 			}
 		}	
 	}		
-	
+	public void manageArrivals2( int tick ){
+		if ( tick == 0 ) {
+			for(TrafficCell source:sources.keySet()){
+				int time = (int)Math.round( -1/(1/60.0)*Math.log( Math.random() ) );
+				sources.put(source, time);
+			}
+		}else{
+			
+			for(TrafficCell source:sources.keySet()){
+				if(sources.get(source)>=tick){
+					if(grid[source.row][source.col].vehicle==null){
+						grid[source.row][source.col].vehicle=new Vehicle(tick,source.street,statistics);
+						numInSystem++;
+					}
+					int time = (int)Math.round( -1/(1/60.0)*Math.log( Math.random() ) );
+					sources.put(source, tick+time);
+					
+				}
+			}
+		}
+	}	
 	public void manageArrivals( int tick ){
 		if ( tick == 0 ) {
 			arrivalTimes[0] = (int)Math.round( -1/(1/60.0)*Math.log( Math.random() ) ); // draws an Exponential(lamda = 1/60 cars/tick) variate for steetId 0's source
@@ -401,7 +435,8 @@ public class MobileSimulation {
 			for ( int i = 0; i < 4; i++ ){
 				if ( arrivalTimes[i] == tick ) {
 					if ( grid[sourceY[i]][sourceX[i]].vehicle == null ) { //if there is no vehicle in the patch
-						grid[sourceY[i]][sourceX[i]].vehicle = new Vehicle( tick ); //introduce a new car at the streetId's source
+						//grid[sourceY[i]][sourceX[i]].vehicle = new Vehicle( tick ); //introduce a new car at the streetId's source
+						numInSystem++;
 					}	
 					arrivalTimes[i] = (int)Math.round( -1/(1/60.0)*Math.log( Math.random() ) +tick ); // draws a fresh Exponential(lamda = 1/60 cars/tick) variate for the given source where a car just arrived
 				}
@@ -445,7 +480,7 @@ public class MobileSimulation {
 		System.out.println(getGrid());
 	}	
 	
-		public String getGrid(){
+	public String getGrid(){
 		String str = "";
 		for(int i=0;i<height;i++){
 			for(int j=0;j<width;j++){
@@ -454,11 +489,6 @@ public class MobileSimulation {
 			str+="\n";
 		}
 		return str;
-	}
-		
-	public TrafficCell[][] getGridCells()
-	{
-		return grid;
 	}
 	
 	public void initializeRoads( int numberOfInitialCars ){
@@ -470,6 +500,14 @@ public class MobileSimulation {
 		//loop through the roads and check if there is a signal thats red, if so, set isFlowing to false
 		return isFlowing;
 	}		
-	
-	//-------------CODE GRAVE END----------------	
+	public TrafficCell[][] getGridCells()
+	{
+		return grid;
+	}
+	public static void main(String[]args){
+		MobileSimulation sim = new MobileSimulation();
+		TrafficStatistics stats = sim.runSimulation();
+		System.out.println(stats.getStats());
+		System.out.println(stats.getVehicleStats(50));
+	}
 }

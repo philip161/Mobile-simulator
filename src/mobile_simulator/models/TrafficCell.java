@@ -135,12 +135,13 @@ public class TrafficCell {
 	//FIXME needs the time increment, not the actual tick time
 	public void computeNextMove(int time) {
 		
+		
 		if( vehicle != null ){
 			
 			int timeInCell = vehicle.getTimeInCell(); //returns 5
 			if( time >= vehicleLeaveTime ){ // A vehicle has stayed at a cell long enough, so it jumps ahead:
 				if( type == CellType.SINK ){
-					vehicle.destroy(time);
+					vehicle.destroy(time,street);
 					vehicle = null;
 				//FIXME 12 add elseif for type == CellType.TRAFFIC_LIGHT: make sure to block movement if the corresponding signal is red and make sure to not go to another TRAFFIC_LIGHT while turning
 				}else{ //the cell a vehicle currently is on is a SOURCE, NORMAL, or a TRAFFIC_LIGHT
@@ -155,13 +156,14 @@ public class TrafficCell {
 							return;
 						}
 					}
-					
 					TrafficCell nextCell = MobileSimulation.getNextCell(street,this);
+					
 					if(nextCell.vehicle == null){
 						nextCell.vehicle = vehicle;
 						nextCell.vehicleLeaveTime = time + timeInCell;
 						vehicle = null;
 					}else{
+						vehicle.updateDelay(MobileSimulation.TICK_CHANGE);
 						++vehicleLeaveTime;
 					}
 				}
@@ -174,6 +176,7 @@ public class TrafficCell {
 	public Direction crossIntersection(int targetVehicleId) {
 		
 		if( vehicle != null ){
+			
 			if( vehicle.vehicleId == targetVehicleId ){
 				int max = 0;
 				for(int i=0;i<turnProbabilities.length;i++){
@@ -199,6 +202,12 @@ public class TrafficCell {
 		}
 		return null;
 	}
+
+	@Override
+	public String toString() {
+		return "TrafficCell [row=" + row + ", col=" + col + ", street="
+				+ street + ", type=" + type + "]";
+	}
 	
 	//---------------------------CODE GRAVEYARD---------------------------------	
 	/* FIXME: Below comment is not valid any more; decided to go for static traffic light array
@@ -208,7 +217,4 @@ public class TrafficCell {
 	 * Other cells will have a null TrafficLight object
 	 */
 	 
-	public String toString(){
-		return type.value+"";
-	}
 }

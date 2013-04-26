@@ -2,6 +2,7 @@ package mobile_simulator.activities;
 
 import mobile_simulator.graphics.GraphicsHelper;
 import mobile_simulator.models.MobileSimulation;
+import mobile_simulator.models.TrafficStatistics;
 
 import com.example.mobile_simulator.R;
 
@@ -24,14 +25,11 @@ public class MainActivity extends Activity {
         setContentView(R.layout.main_activity);
         tv = (TextView)this.findViewById(R.id.textView);
         m_imageViewMap = (ImageView)this.findViewById(R.id.imageViewMap);
-    	MobileSimulation sim = new MobileSimulation();
-    	//simulation reads from string array
-    	sim.getData();
-    	String str = sim.getGrid();
+    	MobileSimulation sim = new MobileSimulation();    
 		final int TICKS = 3600;
 		final int NUMBER_OF_INITIAL_CARS = 30;
-    	sim.runSimulation(TICKS, NUMBER_OF_INITIAL_CARS);
-    	tv.setText("Done Simulating");
+    	TrafficStatistics stats = sim.runSimulation(TICKS, NUMBER_OF_INITIAL_CARS);
+    	tv.setText(stats.getVehicleStats(50));
     	m_imageViewMap.setImageBitmap(GraphicsHelper.CreateBitmapFromGridOfCells(sim.getGridCells()));
 
     }
