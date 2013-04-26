@@ -11,24 +11,23 @@ import java.util.List;
 public class TrafficStatistics {
 
 	
-	private double averageTimeInSystem;
+	
 	private double sumTimeInSystem;
-	private double averageNumInSystem;
-	private HashMap<Integer,Integer> carsThroughSink;
+	public HashMap<Integer,Integer> carsThroughSink;
 	private LinkedList<Vehicle> vehicles;
 	private HashMap<Integer,Integer> numInSystem;
 	private int sumNumInSystem;
 	private int simulationTime;
-	private int destroyed;
+	public int created;
+	public int destroyed;
 	
 	public TrafficStatistics(int simTime){
 		
-		averageTimeInSystem = 0;
 		sumTimeInSystem = 0;
-		averageNumInSystem = 0;
 		sumNumInSystem = 0;
 		destroyed = 0;
 		simulationTime = simTime;
+		created = 0;
 		carsThroughSink = new HashMap<Integer,Integer>();
 		vehicles = new LinkedList<Vehicle>();
 		numInSystem = new HashMap<Integer,Integer>();
@@ -62,6 +61,7 @@ public class TrafficStatistics {
 		for(Integer tick:ticks){
 			writer.println(tick+","+numInSystem.get(tick));
 		}
+		writer.close();
 	}
 	public double getAverageVehicleBackup(){
 		double sum = 0;
@@ -74,8 +74,8 @@ public class TrafficStatistics {
 		// TODO Auto-generated method stub
 		return (double)sumTimeInSystem/destroyed;
 	}
-	public double getAverageNumInSystem(int ticks){
-		return sumNumInSystem/ticks;
+	public double getAverageNumInSystem(){
+		return sumNumInSystem/simulationTime;
 	}
 	public void writeCarsThroughSink(String filename){
 		
@@ -98,6 +98,9 @@ public class TrafficStatistics {
 			if(v.vehicleId==vehicleId)
 				vehicle = v;
 		}
+		if(vehicle == null ){
+			return null;
+		}
 		String str = "Vehicle "+vehicle.vehicleId+"\n\n";
 		str += "Arrived in system at time: "+vehicle.startTick+" at street: "+vehicle.arrivalStreet+"\n";
 		str += "Left the system at time: "+vehicle.startTick+vehicle.timeInSystem+" at street: "+vehicle.departureStreet+"\n";
@@ -109,7 +112,7 @@ public class TrafficStatistics {
 		
 		String str = "Num created: "+Vehicle.staticVehicleId+"\n";
 		str += "Num that left the system: "+destroyed+"\n";
-		str += "Average num in system: "+getAverageNumInSystem(simulationTime)+"\n";
+		str += "Average num in system: "+getAverageNumInSystem()+"\n";
 		str += "Average vehicle backup: "+getAverageVehicleBackup()+"\n";
 		str += "Average time in system: "+getAverageTimeInSystem()+"\n";
 		List<Integer>keys = new ArrayList<Integer>(carsThroughSink.keySet());
