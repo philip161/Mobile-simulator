@@ -559,6 +559,6 @@ public class MobileSimulation {
 		TrafficStatistics stats = sim.runSimulation(3000,10,TrafficType.LOW);
 		System.out.println(stats.getStats());
 		//System.out.println(stats.getVehicleStats(1));
-		stats.writeNumInSystemToFile("numInSystemOverTimeLow.csv");
+		//stats.writeNumInSystemToFile("numInSystemOverTimeLow.csv");
 	}
 }

@@ -137,23 +137,23 @@ public class MobileSimExperiment {
 	public String summarize(){
 		
 		String str = "";
-		str += new ConfidenceInterval("Average Number in System",averageNumInSystem,stdevnumInSystem)+"\n";
-		str += new ConfidenceInterval("Average Time in System",averageTimeInSystem,stdevtimeInSystem)+"\n";
-		str += new ConfidenceInterval("Average Vehicle Backup",averageBackup,stdevvehicleBackup)+"\n";
-		str += new ConfidenceInterval("Average Number Created",averageCreated,stdevnumCreated)+"\n";
-		str += new ConfidenceInterval("Average Number Destroyed",averageDestroyed,stdevnumDestroyed)+"\n";
+		str += new ConfidenceInterval("Average Number in System",averageNumInSystem,stdevnumInSystem,numRuns)+"\n";
+		str += new ConfidenceInterval("Average Time in System",averageTimeInSystem,stdevtimeInSystem,numRuns)+"\n";
+		str += new ConfidenceInterval("Average Vehicle Backup",averageBackup,stdevvehicleBackup,numRuns)+"\n";
+		str += new ConfidenceInterval("Average Number Created",averageCreated,stdevnumCreated,numRuns)+"\n";
+		str += new ConfidenceInterval("Average Number Destroyed",averageDestroyed,stdevnumDestroyed,numRuns)+"\n";
 		
 		List<Integer> sortedSinks = new ArrayList<Integer>(aveSinks.keySet());
 		Collections.sort(sortedSinks);
 		
 		str+= "\nSink Throughput\n";
 		for(Integer sink:sortedSinks){
-			str += new ConfidenceInterval(sink+"",aveSinks.get(sink),stdevSinks.get(sink))+"\n";
+			str += new ConfidenceInterval(sink+"",aveSinks.get(sink),stdevSinks.get(sink),numRuns)+"\n";
 		}
 		return str;
 	}
 	public static void main(String[] args) {
-		MobileSimExperiment experiment = new MobileSimExperiment(20,TrafficType.LOW);
+		MobileSimExperiment experiment = new MobileSimExperiment(20,TrafficType.HIGH);
 		System.out.println(experiment.runExperiment());
 	}
 

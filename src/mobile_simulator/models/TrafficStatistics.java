@@ -88,21 +88,6 @@ public class TrafficStatistics {
 		
 		return (double)sumNumInSystem/simulationTime;
 	}
-	public void writeCarsThroughSink(String filename){
-		
-		PrintWriter writer = null;
-		try {
-			writer = new PrintWriter(filename);
-		} catch (FileNotFoundException e) {e.printStackTrace();}
-		
-		List<Integer> ticks = new ArrayList<Integer>(carsThroughSink.keySet());
-		Collections.sort(ticks);
-		
-		for(Integer tick:ticks){
-			writer.println(tick+","+carsThroughSink.get(tick));
-		}
-		
-	}
 	public String getVehicleStats(int vehicleId){
 		Vehicle vehicle = null;
 		for(Vehicle v:vehicles){
