@@ -16,22 +16,21 @@ import android.widget.TextView;;
 
 public class MainActivity extends Activity {
 
-	private TextView tv;
-	private ImageView m_imageViewMap;
-	
+private TextView tv;
+private ImageView m_imageViewMap;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_activity);
         tv = (TextView)this.findViewById(R.id.textView);
         m_imageViewMap = (ImageView)this.findViewById(R.id.imageViewMap);
-    	MobileSimulation sim = new MobileSimulation();    
-		final int TICKS = 3600;
-		final int NUMBER_OF_INITIAL_CARS = 30;
-    	TrafficStatistics stats = sim.runSimulation(TICKS, NUMBER_OF_INITIAL_CARS);
-    	tv.setText(stats.getVehicleStats(50));
-    	m_imageViewMap.setImageBitmap(GraphicsHelper.CreateBitmapFromGridOfCells(sim.getGridCells()));
-
+     MobileSimulation sim = new MobileSimulation();
+final int TICKS = 3600;
+final int NUMBER_OF_INITIAL_CARS = 30;
+     TrafficStatistics stats = sim.runSimulation(TICKS, NUMBER_OF_INITIAL_CARS);
+     tv.setText(stats.getVehicleStats(50));
+     m_imageViewMap.setImageBitmap(GraphicsHelper.CreateBitmapFromGridOfCells(sim.getGridCells(),0,true));
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
