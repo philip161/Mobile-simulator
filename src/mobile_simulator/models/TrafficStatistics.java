@@ -18,8 +18,8 @@ public class TrafficStatistics {
 	private HashMap<Integer,Integer> numInSystem;
 	private int sumNumInSystem;
 	private int simulationTime;
-	public int created;
 	public int destroyed;
+	public int created;
 	
 	public TrafficStatistics(int simTime){
 		
@@ -34,6 +34,11 @@ public class TrafficStatistics {
 		
 		
 	}
+	/**
+	 * Update statistics when a car leaves the simualation
+	 * @param vehicle
+	 * @param street
+	 */
 	public void vehicleDestroyed(Vehicle vehicle,int street){
 		
 		vehicles.add( vehicle );
@@ -45,6 +50,11 @@ public class TrafficStatistics {
 		destroyed++;
 		
 	}
+	/**
+	 * Keeps track of cars in system at a particular tick
+	 * @param tick
+	 * @param numCars
+	 */
 	public void updateTotalInSystem(int tick,int numCars){
 		numInSystem.put(tick, numCars);
 		sumNumInSystem+=numCars;
@@ -75,7 +85,8 @@ public class TrafficStatistics {
 		return (double)sumTimeInSystem/destroyed;
 	}
 	public double getAverageNumInSystem(){
-		return sumNumInSystem/simulationTime;
+		
+		return (double)sumNumInSystem/simulationTime;
 	}
 	public void writeCarsThroughSink(String filename){
 		
@@ -103,7 +114,7 @@ public class TrafficStatistics {
 		}
 		String str = "Vehicle "+vehicle.vehicleId+"\n\n";
 		str += "Arrived in system at time: "+vehicle.startTick+" at street: "+vehicle.arrivalStreet+"\n";
-		str += "Left the system at time: "+vehicle.startTick+vehicle.timeInSystem+" at street: "+vehicle.departureStreet+"\n";
+		str += "Left the system at time: "+(vehicle.startTick+vehicle.timeInSystem)+" at street: "+vehicle.departureStreet+"\n";
 		str += "Total time in system: "+vehicle.timeInSystem+"\n";
 		str += "Total backup: "+vehicle.totalBackup+"\n";
 		return str;

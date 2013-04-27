@@ -38,7 +38,6 @@ public class Vehicle {
 		
 		timeInSystem = time - startTick;
 		departureStreet = street;
-		//System.out.println("Destroying vehicle "+vehicleId+"/ "+staticVehicleId);
 		statistics.vehicleDestroyed(this, street);
 		
 		MobileSimulation.numInSystem--;

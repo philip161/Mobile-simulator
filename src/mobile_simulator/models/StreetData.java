@@ -11,6 +11,15 @@ public class StreetData {
 	public int height;
 	public Direction direction;
 	
+	/**
+	 * Street information for a road segment
+	 * @param street
+	 * @param startX
+	 * @param startY
+	 * @param width
+	 * @param height
+	 * @param direction
+	 */
 	public StreetData(int street, int startX, int startY, int width, int height,
 			Direction direction) {
 		super();

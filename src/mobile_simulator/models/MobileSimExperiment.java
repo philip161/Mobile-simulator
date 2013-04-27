@@ -1,11 +1,13 @@
 package mobile_simulator.models;
 
-import java.util.Collections;
 import java.util.*;
+
+import mobile_simulator.models.MobileSimulation.TrafficType;
 
 public class MobileSimExperiment {
 
 	
+	private TrafficType type;
 	private int numRuns;
 	private TrafficStatistics [] stats;
 	private HashMap<Integer,Double>aveSinks = new HashMap<Integer,Double>();
@@ -22,7 +24,11 @@ public class MobileSimExperiment {
 	double stdevnumDestroyed;
 	
 	public MobileSimExperiment(int numRuns){
+		this(numRuns,TrafficType.MEDIUM);
+	}
+	public MobileSimExperiment(int numRuns,TrafficType type){
 		this.numRuns = numRuns;
+		this.type = type;
 		stats = new TrafficStatistics[numRuns];
 		averageNumInSystem = 0;
 		averageTimeInSystem = 0;
@@ -35,16 +41,23 @@ public class MobileSimExperiment {
 		stdevnumCreated = 0;
 		stdevnumDestroyed = 0;
 	}
+	/**
+	 * Runs multiple traffic simulations
+	 * @return results of experiment
+	 */
 	public String runExperiment(){
 		for(int i=0;i<numRuns;i++){
 			
-			TrafficStatistics ts = new MobileSimulation().runSimulation();
+			TrafficStatistics ts = new MobileSimulation().runSimulation(3200,10,type);
 			stats[i] = ts;
 		}
 		getStats();
 		return summarize();
 		
 	}
+	/**
+	 * Get statistics from experiment
+	 */
 	public void getStats(){
 		
 		double numInSystem = 0;
@@ -117,6 +130,10 @@ public class MobileSimExperiment {
 			stdevSinks.put(sink, Math.sqrt(val/numRuns));
 		}
 	}
+	/**
+	 * 
+	 * @return results of experiment
+	 */
 	public String summarize(){
 		
 		String str = "";
@@ -136,7 +153,7 @@ public class MobileSimExperiment {
 		return str;
 	}
 	public static void main(String[] args) {
-		MobileSimExperiment experiment = new MobileSimExperiment(10);
+		MobileSimExperiment experiment = new MobileSimExperiment(20,TrafficType.LOW);
 		System.out.println(experiment.runExperiment());
 	}
 

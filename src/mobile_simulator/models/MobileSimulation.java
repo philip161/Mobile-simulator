@@ -2,6 +2,7 @@ package mobile_simulator.models;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 import java.util.Scanner;
@@ -12,55 +13,51 @@ import mobile_simulator.models.TrafficCell.CellType;
 
 public class MobileSimulation {
 	//---------------GLOBALS START---------------------
+	private int count=0;
 	public static final int TICK_TIME = 1;
 	private static TrafficCell [][] grid; // The first index is the y coordinate measured from the top; the second index is the x coordinate measured from the left.
 	private String inputFilename="simulation_input.txt";
 	private int height,width;
-	private int [] arrivalTimes = new int[4];
-	private final int[] sourceX = { 35, 0, 88, 83 }; //these are the x coordinates of the four sources on the map; increasing steetid
-	private final int[] sourceY = { 0, 21, 39, 68 };//these are the y coordinates of the four sources on the map; increasing steetid
 	public static boolean[] trafficLightStatus = { true, true, true }; //true means that vehicles on the vertical are allowed to move
 	public static HashMap<Integer,StreetData> streetData;
 	private static int targetVehicleId = 5;
-	private static final int SIM_TIME = 3600;
+	private int simulationTime;
 	private TrafficStatistics statistics;
 	public static final int TICK_CHANGE = 1;
 	public static HashMap<Integer,Integer> streetIdToSignalId;
 	public static int numInSystem;
-	private HashMap<TrafficCell,Integer>sources;
+	private HashMap<Integer,HashMap<TrafficCell,Integer>>sources;
+	private double HIGH_TRAFFIC = 5;
+	private double MEDIUM_TRAFFIC = 15;
+	private double LOW_TRAFFIC = 30;
+	private TrafficType simType;
 	
-	public static void setupStreetIdToSignalId(){
-		//the signalId's are numbered in increasing order from top-left to bottom-right on the map
-		streetIdToSignalId = new HashMap<Integer,Integer>();
-		streetIdToSignalId.put(0, 0);
-        streetIdToSignalId.put(2, 0);	
-		streetIdToSignalId.put(5, 0);
-		
-		streetIdToSignalId.put(4, 1);
-		streetIdToSignalId.put(7, 1);
-		
-		streetIdToSignalId.put(8, 2);
-		streetIdToSignalId.put(10, 2);		
-		
-		//These streets aren't associated to any signal
-		streetIdToSignalId.put(1, -1);
-		streetIdToSignalId.put(3, -1);
-		streetIdToSignalId.put(6, -1);
-		streetIdToSignalId.put(9, -1);			
-	}	
+	public enum TrafficType{
+		LOW,MEDIUM,HIGH
+	}
 	public TrafficStatistics runSimulation() {
 		
-		return runSimulation(SIM_TIME,30);
+		return runSimulation(3000,5,TrafficType.MEDIUM);
 	}
-
-	public TrafficStatistics runSimulation(int ticks, int numberOfInitialCars){
+	public TrafficStatistics runSimulation(int ticks,int numberOfInitialCars){
+		return  runSimulation(ticks,numberOfInitialCars,TrafficType.MEDIUM);
+	}
+	public TrafficStatistics runSimulation(int ticks, int numberOfInitialCars,TrafficType type){
 		
-		statistics = new TrafficStatistics(SIM_TIME);
+		simType = type;
+		simulationTime = ticks;
+		statistics = new TrafficStatistics(ticks);
 		numInSystem = 0;
-		sources = new HashMap<TrafficCell,Integer>();
+		sources = new HashMap<Integer,HashMap<TrafficCell,Integer>>();
 		setupStreetIdToSignalId();
 		getData();
-		initializeRoads( numberOfInitialCars );
+		
+		//randomly setup lights;
+		if( Math.random()<.5 ){
+			trafficLightStatus[0]=false;
+			trafficLightStatus[1]=false;
+			trafficLightStatus[2]=false;
+		}
 		
 		for(int tick = 0; tick < ticks; tick+=TICK_CHANGE ){
 			statistics.updateTotalInSystem(tick, numInSystem);
@@ -70,9 +67,6 @@ public class MobileSimulation {
 			}
 			manageArrivals2( tick );
 		}	
-		return statistics;
-	}
-	public TrafficStatistics getStatistics(){
 		return statistics;
 	}
 	//---------------RUN LOGIC END-----------------	
@@ -89,6 +83,30 @@ public class MobileSimulation {
 		
 		height = 69;
 		width = 89;
+		
+		/**
+		 * This data structure holds the data to setup the grid. Each row is 
+		 * 
+		 * street
+		 * column - top left column of street segment
+		 * row - top row of street segment
+		 * width - width of the street segment
+		 * height - height of the street segment
+		 * directions - directions that vehicles can travel on this segment
+		 * 		-1111 means NESW, 0111 means east, south, and west
+		 * direction - direction that the street is going
+		 * 		-North(0)	East(1)		South(2)	West(3)
+		 * next street - streets that this segment goes into
+		 * 		_463 - This means that the street cannot go north
+		 * 		It can go to road segment 4 if headed east
+		 * 		It can go to road segment 6 if headed south
+		 * 		It can go to road segment 3 if headed west
+		 * turn probabilities
+		 * 		Probabilites for each direction 
+		 * 		0 means that the segment cannot go in that direction
+		 * 		a nonzero x means that the street has an x/10.0 probability of turning
+		 * 		@ is for 1
+		 */
 		String [] data = {
 				"0,35,0,4,20,0111,2,_463,0253",
 				"1,83,0,4,20,1000,0,____,0000",
@@ -103,12 +121,9 @@ public class MobileSimulation {
 				"10,83,41,4,28,1100,0,79__,6400"
 		};
 		
-		
-		//initialize the grid and streetData
 		grid = new TrafficCell[height][width];
 		streetData = new HashMap<Integer,StreetData>();
 		
-		// set the traffic cells to EMPTY
 		for(int i=0;i<height;i++){
 			for(int j=0;j<width;j++){
 				grid[i][j]=new TrafficCell(CellType.EMPTY,i,j,-1);
@@ -118,7 +133,10 @@ public class MobileSimulation {
 			updateGrid(data[i]);
 		}
 	}
-	
+	/**
+	 * Update the grid based on street segment data
+	 * @param line Line of data for street segment
+	 */
 	private void updateGrid(String line){
 		
 		//street id,x start,y start,width,height,directions,vertical(1)/horizontal(0)
@@ -147,13 +165,29 @@ public class MobileSimulation {
 				grid[i][j] = new TrafficCell(type,i,j,street,directions,direction,changeStreets,turnProbabilities);
 				if( type==CellType.SOURCE ){
 					TrafficCell cell = grid[i][j];
-					sources.put(cell, 0);
+					HashMap<TrafficCell,Integer> map = sources.get(street);
+					if(map==null){
+						map = new HashMap<TrafficCell,Integer>();
+					}
+					map.put(cell, simulationTime+10);
+					sources.put(street, map);
 				}
 			}
 		}
 		
 	}	
-	
+	/**
+	 * Figure out the type of cell
+	 * @param x - column
+	 * @param y - row
+	 * @param startx - start column of street segment
+	 * @param endx - end row of street segment 
+	 * @param starty - start row
+	 * @param endy - end row
+	 * @param directions - directions of street segment
+	 * @param streetDirection - flow of street 
+	 * @return CellType
+	 */
 	private CellType computeType(int x, int y, int startx, int endx, int starty, int endy, String directions, int streetDirection) {
 		
 		/*
@@ -218,11 +252,35 @@ public class MobileSimulation {
 		return CellType.NORMAL;
 	}	
 
-//-------------SETUP GRID END------------------------	
+	//---------------RUN LOGIC END-----------------	
 	
-//-------------MOVE VEHICLES START-------------------	
-	//for a given street, manages all vehicles moving though its cells
-	public void computeNewStreetState(StreetData sd, int currTime){
+	
+	private void setupStreetIdToSignalId(){
+		//the signalId's are numbered in increasing order from top-left to bottom-right on the map
+		streetIdToSignalId = new HashMap<Integer,Integer>();
+		streetIdToSignalId.put(0, 0);
+	    streetIdToSignalId.put(2, 0);	
+		streetIdToSignalId.put(5, 0);
+		
+		streetIdToSignalId.put(4, 1);
+		streetIdToSignalId.put(7, 1);
+		
+		streetIdToSignalId.put(8, 2);
+		streetIdToSignalId.put(10, 2);		
+		
+		//These streets aren't associated to any signal
+		streetIdToSignalId.put(1, -1);
+		streetIdToSignalId.put(3, -1);
+		streetIdToSignalId.put(6, -1);
+		streetIdToSignalId.put(9, -1);			
+	}
+	/**
+	 * Moves through the street segment in a type writer like fashion updating
+	 * each cell
+	 * @param sd - Street information for the current street
+	 * @param currTime - current time;
+	 */
+	private void computeNewStreetState(StreetData sd, int currTime){
 		
 		TrafficCell cell = null;
 		//set the hook first
@@ -240,7 +298,7 @@ public class MobileSimulation {
 	}
 
 	//follow all cells in a street typewriter-style
-	public TrafficCell findNextCell(StreetData sd, TrafficCell tc){
+	private TrafficCell findNextCell(StreetData sd, TrafficCell tc){
 		
 		int row = tc.row;
 		int col = tc.col;
@@ -304,8 +362,12 @@ public class MobileSimulation {
 		return null;
 	}
 	
-	// Only called from TrafficCell.java where a vehicle goes from one cell to another
-	// Answers the question: Where is a particular vehicle going?
+	/**
+	 * This method finds the next cell that a vehicle will move to.
+	 * @param street - current street
+	 * @param tc - Traffic Cell
+	 * @return
+	 */
 	public static TrafficCell getNextCell(int street, TrafficCell tc) {
 		
 		
@@ -323,7 +385,7 @@ public class MobileSimulation {
 		}
 		switch( sd.direction ){
 		
-		/* 
+		/*
 		 * If headed north
 		 * 
 		 * 		   NORTH     EAST               SOUTH             WEST
@@ -336,9 +398,6 @@ public class MobileSimulation {
 		 *         for each lane we compute starting at the position labeled T
 		 *         going back
 		 */
-		 
-		 //if-else for TRAFFIC_LIGHT might be obsolete; see 'FIXME 12' in trafficcell.java
-		
 		
 			case NORTH:{
 					return grid[--row][col];
@@ -356,6 +415,13 @@ public class MobileSimulation {
 		}
 		return null;
 	}	
+	/**
+	 * If a vehicle is crossign the street, find out what cell it needs to move to
+	 * @param sd - street data of current street
+	 * @param oldCell - current cell
+	 * @param direction - direction of movement across the intersection
+	 * @return
+	 */
 	private static TrafficCell get1stCellNextStreet(StreetData sd,TrafficCell oldCell,Direction direction){
 		Random rand = new Random();
 		switch(sd.direction){
@@ -395,9 +461,11 @@ public class MobileSimulation {
 		return null;
 		
 	}
-//-------------MOVE VEHICLES END-------------------		
-
-	public void manageTrafficLights( int tick ){
+	/**
+	 * Toggles light booleans
+	 * @param tick
+	 */
+	private void manageTrafficLights( int tick ){
 		if ( tick != 0 ) {
 			//initialize traffic lights
 			for ( int i = 0; i < 3; i++ ){
@@ -406,85 +474,72 @@ public class MobileSimulation {
 				}
 			}
 		}	
-	}		
-	public void manageArrivals2( int tick ){
-		double rate = 1.0/15;
+	}
+	/**
+	 * 
+	 * @param tick
+	 */
+	private void manageArrivals2( int tick ){
+		
+		double everyXseconds = 0;
+		
+		switch( simType ){
+			case LOW:everyXseconds = LOW_TRAFFIC;break;
+			case MEDIUM:everyXseconds = MEDIUM_TRAFFIC;break;
+			case HIGH:everyXseconds = HIGH_TRAFFIC;break;
+		}
+		
 		if ( tick == 0 ) {
-			for(TrafficCell source:sources.keySet()){
-				int time = (int)Math.exp(rate);
-				sources.put(source, time);
+			for(Integer street:sources.keySet()){
+				int time = (int)Math.round( -1/(1/everyXseconds)*Math.log( Math.random() ) );
+				TrafficCell cell = getNextSourceCell(street);
+				sources.get(street).put(cell, time);
 			}
 		}else{
 			
-			for(TrafficCell source:sources.keySet()){
-				if(sources.get(source)>=tick){
-					if(grid[source.row][source.col].vehicle==null){
-						grid[source.row][source.col].vehicle=new Vehicle(tick,source.street,statistics);
-						numInSystem++;
-						statistics.created++;
+			for(Integer street:sources.keySet()){
+				
+				for(TrafficCell cell:sources.get(street).keySet()){
+					if(sources.get(street).get(cell)<=tick){
+						if(cell.vehicle==null){
+							
+							cell.vehicle=new Vehicle(tick,cell.street,statistics);
+							numInSystem++;
+							statistics.created++;
+							int time = (int)Math.round( -1/(1/everyXseconds)*Math.log( Math.random() ) );
+							count++;
+							sources.get(street).put(cell, simulationTime+10);
+							TrafficCell next = getNextSourceCell(street);
+							sources.get(street).put(next, tick+time);
+							
+							break;
+						}
 					}
-					int time = (int)Math.exp(rate);
-					sources.put(source, tick+time);
-					
 				}
 			}
 		}
 	}	
-	public void manageArrivals( int tick ){
-		if ( tick == 0 ) {
-			arrivalTimes[0] = (int)Math.round( -1/(1/60.0)*Math.log( Math.random() ) ); // draws an Exponential(lamda = 1/60 cars/tick) variate for steetId 0's source
-			arrivalTimes[1] = (int)Math.round( -1/(1/60.0)*Math.log( Math.random() ) ); // draws an Exponential(lamda = 1/60 cars/tick) variate for steetId 2's source		
-			arrivalTimes[2] = (int)Math.round( -1/(1/60.0)*Math.log( Math.random() ) ); // draws an Exponential(lamda = 1/60 cars/tick) variate for steetId 8's source
-			arrivalTimes[3] = (int)Math.round( -1/(1/60.0)*Math.log( Math.random() ) ); // draws an Exponential(lamda = 1/60 cars/tick) variate for steetId 10's source
-		} else {
-			for ( int i = 0; i < 4; i++ ){
-				if ( arrivalTimes[i] == tick ) {
-					if ( grid[sourceY[i]][sourceX[i]].vehicle == null ) { //if there is no vehicle in the patch
-						//grid[sourceY[i]][sourceX[i]].vehicle = new Vehicle( tick ); //introduce a new car at the streetId's source
-						numInSystem++;
-					}	
-					arrivalTimes[i] = (int)Math.round( -1/(1/60.0)*Math.log( Math.random() ) +tick ); // draws a fresh Exponential(lamda = 1/60 cars/tick) variate for the given source where a car just arrived
-				}
-			}
-		}
-	}	
-	
-
-	
-	//-------------CODE GRAVE START----------------
-	//tools for I/O, debugging and some extension ideas
 	/**
-	 * Setup traffic grid
+	 * Helper function which determines a source cell to generate an arrival from
+	 * next
+	 * @param street - Street of arrival
+	 * @return TrafficCell
 	 */
-	private void readFile(){
-	
-		Scanner scan = null;
-		try {
-			scan = new Scanner( new File(inputFilename) );
-		} catch (FileNotFoundException e) {e.printStackTrace();}
+	private TrafficCell getNextSourceCell(int street){
 		
-		height = Integer.parseInt( scan.nextLine() );
-		width = Integer.parseInt( scan.nextLine() );
-		String line = scan.nextLine();
-		grid = new TrafficCell[height][width];
-		for(int i=0;i<height;i++){
-			for(int j=0;j<width;j++){
-				grid[i][j]=new TrafficCell(CellType.EMPTY,i,j,-1);
-			}
-		}
-		//System.out.println("Width: "+width+" height: "+height);
-		
-		while( scan.hasNext() ){
-			line = scan.nextLine();
-			//System.out.println(line);
-			updateGrid(line);
-		}
+		HashMap<TrafficCell,Integer> map = sources.get(street);
+		ArrayList<TrafficCell> cells = new ArrayList<TrafficCell>(map.keySet());
+		int ind = (int)(Math.random()*cells.size());
+		return cells.get(ind);
 	}
-	
+	public boolean isStreetFlowing( int streetId ){
+		boolean isFlowing = true;
+		//loop through the roads and check if there is a signal thats red, if so, set isFlowing to false
+		return isFlowing;
+	}		
 	public void printGrid(){
 		System.out.println(getGrid());
-	}	
-	
+	}
 	public String getGrid(){
 		String str = "";
 		for(int i=0;i<height;i++){
@@ -495,25 +550,15 @@ public class MobileSimulation {
 		}
 		return str;
 	}
-	
-	public void initializeRoads( int numberOfInitialCars ){
-		//loop through the roads and randomly plant cars on ramdom cells that are free 
-	}
-	
-	public boolean isStreetFlowing( int streetId ){
-		boolean isFlowing = true;
-		//loop through the roads and check if there is a signal thats red, if so, set isFlowing to false
-		return isFlowing;
-	}		
 	public TrafficCell[][] getGridCells()
 	{
 		return grid;
 	}
 	public static void main(String[]args){
 		MobileSimulation sim = new MobileSimulation();
-		TrafficStatistics stats = sim.runSimulation(3000,10);
+		TrafficStatistics stats = sim.runSimulation(3000,10,TrafficType.LOW);
 		System.out.println(stats.getStats());
-		System.out.println(stats.getVehicleStats(1));
-		//stats.writeNumInSystemToFile("numInSystemOverTime.csv");
+		//System.out.println(stats.getVehicleStats(1));
+		stats.writeNumInSystemToFile("numInSystemOverTimeLow.csv");
 	}
 }

@@ -6,7 +6,6 @@ import mobile_simulator.models.MobileSimulation;
 
 public class TrafficCell {
 	//---------------------------FIELDS AND ENUMS---------------------------------
-	private TrafficLight light;
 	public Vehicle vehicle;
 	private double [] turnProbabilities;
 	public int row;
@@ -14,7 +13,7 @@ public class TrafficCell {
 	public double vehicleLeaveTime;
 	public int street;
 	public CellType type;
-	public Direction streetDirection;
+	private Direction streetDirection;
 	public HashMap<Direction,Integer>streetChanges;
 	
 	public enum CellType{
@@ -101,38 +100,10 @@ public class TrafficCell {
 		}
 		vehicleLeaveTime = MobileSimulation.TICK_TIME;
 	}
-
-	public void computeProbabilities(String directions) {
-			if( streetDirection == Direction.NORTH ){
-				turnProbabilities[0] = .5;
-				turnProbabilities[1] = .3;
-				turnProbabilities[2] = 0;
-				turnProbabilities[3] = .2;
-			}
-			if( streetDirection == Direction.EAST ){
-				turnProbabilities[0] = .2;
-				turnProbabilities[1] = .5;
-				turnProbabilities[2] = .3;
-				turnProbabilities[3] = 0;
-			}
-			if( streetDirection == Direction.SOUTH ){
-				turnProbabilities[0] = 0;
-				turnProbabilities[1] = .2;
-				turnProbabilities[2] = .5;
-				turnProbabilities[3] = .3;
-			}
-			if( streetDirection == Direction.WEST ){
-				turnProbabilities[0] = .3;
-				turnProbabilities[1] = 0;
-				turnProbabilities[2] = .2;
-				turnProbabilities[3] = .5;
-			}
-	}
-	
-	//---------------------------METHODS CALLED FROM MobileSImulation.java---------------------------------	
-	
-	//manages vehicles moving from one cell to another
-	//FIXME needs the time increment, not the actual tick time
+	/**
+	 * TrafficCell will look at next cell and tick to determine if it should move.
+	 * @param time
+	 */
 	public void computeNextMove(int time) {
 		
 		
@@ -140,15 +111,19 @@ public class TrafficCell {
 			
 			double timeInCell = vehicle.getTimeInCell(); //returns 5
 			if( time >= vehicleLeaveTime ){ // A vehicle has stayed at a cell long enough, so it jumps ahead:
+				
+				//vehicle leaves the system
 				if( type == CellType.SINK ){
 					vehicle.destroy(time,street);
 					vehicle = null;
-				//FIXME 12 add elseif for type == CellType.TRAFFIC_LIGHT: make sure to block movement if the corresponding signal is red and make sure to not go to another TRAFFIC_LIGHT while turning
-				}else{ //the cell a vehicle currently is on is a SOURCE, NORMAL, or a TRAFFIC_LIGHT
+				
+				}else{ 
 					
 					if( type == CellType.TRAFFIC_LIGHT){
 						int val = MobileSimulation.streetIdToSignalId.get(street);
 						boolean bool = MobileSimulation.trafficLightStatus[val];
+						
+						//traffic light is red do nothing
 						if( (streetDirection == Direction.EAST || streetDirection == Direction.WEST) && !bool ){
 							return;
 						}
@@ -156,8 +131,10 @@ public class TrafficCell {
 							return;
 						}
 					}
+					//find the next cell
 					TrafficCell nextCell = MobileSimulation.getNextCell(street,this);
 					
+					//if its empty move there
 					if(nextCell.vehicle == null){
 						nextCell.vehicle = vehicle;
 						nextCell.vehicleLeaveTime = time + timeInCell;
